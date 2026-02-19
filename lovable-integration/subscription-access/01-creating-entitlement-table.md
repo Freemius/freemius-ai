@@ -1,8 +1,6 @@
-Now we will create a table to store the entitlements for our users. This will allow us to manage access to our SaaS features based on the user's subscription status.
+We want to integrate Freemius Checkout and Licensing system with our app.
 
----
-
-We need to create a table called "user_fs_entitlement" with the following columns:
+We need to create a table called `user_fs_entitlement` with the following columns:
 
 - id - The primary key.
 - userId - A foreign key referencing the user table. Value must match with the ID of the user in the lovable auth system (text/string).
@@ -44,5 +42,3 @@ This table will hold purchase information coming from Freemius. Enable RLS and m
 
 1. Users can only READ their own entitlements
 2. Users cannot CREATE, UPDATE or DELETE any entitlements (only the server can do that)
-
----

@@ -4,37 +4,12 @@ Now we will setup webhook for Freemius to synchronize license and subscription c
 2. To process the webhook, we will use the Freemius SDK. (Documentation: https://freemius.com/help/documentation/saas-sdk/js-sdk/integration/#handling-license-updates-via-webhooks)
 
    ```typescript
-   import { freemius } from "../_shared/freemius"; // Correct the path
+   import { freemius, processPurchase } from "../_shared/freemius"; // Correct the path
    import { WebhookAuthenticationMethod } from "npm:@freemius/sdk";
 
    const listener = freemius.webhook.createListener({
      authenticationMethod: WebhookAuthenticationMethod.Api,
    });
-
-   // A function to synchronize the license information to the database
-   async function syncLicense(licenseId: string) {
-     const purchaseInfo = await freemius.purchase.retrievePurchase(licenseId);
-     const localUser = await getUserFromDb(purchaseInfo.email);
-
-     // Convert the purchase information to the entitlement record format for our database.
-     const entitlementData = purchase.toEntitlementRecord({
-       userId: localUser.id,
-     });
-
-     const fsLicenseId = purchase.licenseId;
-     // Now depending whether a record exists in the `user_fs_entitlement` table based on the unique key `fsLicenseId` either insert a new record or update the existing one with the new information from the purchase.
-     // The entitlementData should match the DB columns.
-     // - fsLicenseId: string;
-     // - fsPlanId: string;
-     // - fsPricingId: string;
-     // - fsUserId: string;
-     // - type: 'subscription' | 'lifetime';
-     // - expiration: Date | null;
-     // - createdAt: Date;
-     // - isCanceled: boolean;
-
-     // The record does not include `id` so generate for the upsert.
-   }
 
    // Freemius events to listen to
    const licenseEvents: WebhookEventType[] = [
@@ -49,7 +24,7 @@ Now we will setup webhook for Freemius to synchronize license and subscription c
 
    listener.on(licenseEvents, async ({ objects: { license } }) => {
      if (license && license.id) {
-       await syncLicense(license.id);
+       await processPurchase(license.id);
      }
    });
 
@@ -57,10 +32,14 @@ Now we will setup webhook for Freemius to synchronize license and subscription c
    const rawBody = await request.text();
 
    // Now process it with the Freemius SDK, but intentionally don't await it to make sure we pass a 2xx response to Freemius as soon as possible and avoid retries. We will handle the processing asynchronously and add detailed logs to make sure we can debug any issues that might come up in the process.
-   let result = listener.process({
-     headers: req.headers,
-     rawBody: rawBody,
-   });
+   let result = listener
+     .process({
+       headers: req.headers,
+       rawBody: rawBody,
+     })
+     .catch((error) => {
+       console.error("Error processing Freemius webhook:", error);
+     });
 
    // Pass a 2xx response to Freemius.
    ```
