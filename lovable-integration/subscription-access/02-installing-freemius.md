@@ -61,6 +61,7 @@ async function processPurchase(licenseId: string) {
   // - isCanceled: boolean;
 
   // The record does not include `id` so generate for the upsert.
+  // Use the DATABASE upsert functionality to keep the operation atomic
 }
 
 /**

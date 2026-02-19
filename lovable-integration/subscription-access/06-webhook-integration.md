@@ -5,7 +5,10 @@ Now we will setup webhook for Freemius to synchronize license and subscription c
 
    ```typescript
    import { freemius, processPurchase } from "../_shared/freemius"; // Correct the path
-   import { WebhookAuthenticationMethod } from "npm:@freemius/sdk";
+   import {
+     WebhookAuthenticationMethod,
+     WebhookEventType,
+   } from "npm:@freemius/sdk";
 
    const listener = freemius.webhook.createListener({
      authenticationMethod: WebhookAuthenticationMethod.Api,

@@ -17,17 +17,17 @@ import {
 // The return data needs to be of the shape { entitlement: Entitlement | null, checkoutUrl: string }
 ```
 
-Add some console logs to the API route to make it easier to debug and test.
+Add some console logs to the API route to make it easier to debug and test. It needs to support POST API methods or anything that comes with `supabase.functions.invoke` from the frontend.
 
 ## Front-end Implementation
 
-1. The front-end when loading will make an API call to the `functions/v1/get-entitlements`
+1. The front-end when loading will make API call to the `functions/v1/get-entitlements` using `supabase.functions.invoke`.
 2. If there is an active entitlement, then the front-end will
    1. Show a "Premium" badge in the navbar where currently it shows "Account Status: Free"
    2. Reveal all the UI from where the user can make use of the premium features (for example the "Premium Action" button on the dashboard)
 3. If there is no active entitlement, then the front-end will
    1. Show a "Subscribe" button in the navbar where currently it shows "Account Status: Free"
-   2. Hide all the UI from where the user can make use of the premium features (for example the "Premium Action" button on the dashboard)
+   2. Disable all the UI from where the user can make use of the premium features (for example the "Premium Action" button on the dashboard). It can also hint that a subscription is required to access those features. And also show the same "Subscribe" button next to the "Premium Action" button in the dashboard to make it easier for the user to find how to subscribe. Have it link to the same Checkout URL as the one in the navbar.
    3. Clicking the "Subscribe" button will redirect the user to the Freemius Checkout page using the checkout URL received from the API.
 
 ## Protecting Server Actions

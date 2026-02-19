@@ -1,4 +1,5 @@
-We will create a redirection processor for the checkout so that entitlements are given We will create a public route in the backend/supabase that will be used as the redirection URL after the Freemius Checkout is completed. This route will receive a request from Freemius with the checkout session information, and we can use that information to verify the purchase and update our database accordingly.
+We will create a redirection processor for the checkout so that entitlements are given to the user.
+We will create a public route in the backend/supabase that will be used as the redirection URL after the Freemius Checkout is completed. The Freemius Checkout will redirect to this router after purchase with some query parameters, and we can use that information to verify the purchase and update our database accordingly.
 
 The route will be `supabase/functions/process-checkout/index.ts` and will use the Freemius SDK to verify the checkout and update the `user_fs_entitlement` table.
 
