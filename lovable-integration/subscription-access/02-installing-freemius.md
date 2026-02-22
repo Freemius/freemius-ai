@@ -70,7 +70,7 @@ async function processPurchase(licenseId: string) {
 /**
  * Create a Checkout session for the user.
  */
-function createFreemiusCheckout(user: { email: string; firstName?: string; lastName?: string }): string {
+async function createFreemiusCheckout(user: { email: string; firstName?: string; lastName?: string }): Promise<string> {
     const checkout = await freemius.checkout.create({
         user,
         isSandbox: SANDBOX,
