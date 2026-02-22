@@ -1,79 +1,32 @@
-# Freemius AI Integrations & Skills
+# Freemius AI Integrations and Skills
 
-This repository serves two main purposes:
+This repository contains practical resources for building with Freemius in AI-assisted development workflows.
 
-## 1. 🎨 Vibe Coding Platform Integration Examples
+## What is included
 
-Practical examples and guides for integrating with various AI-powered coding platforms, helping developers understand best practices and implementation patterns.
+1. Vibe coding platform integration examples
+    - **Lovable**
+        - [SaaS application with subscription-based feature access](./lovable-integration/subscription-access/README.md)
+2. Shareable AI agent skills
+    - Initial skill assets are planned and will be added incrementally.
 
-### Supported Platforms
+## Getting started
 
-- **Lovable** - Integration examples and workflows for building applications with Lovable
-- More platforms coming soon...
+Start with the official Freemius AI documentation: [freemius.com/help/ai](https://freemius.com/help/ai).
 
-### Current Examples
+Then explore this repository:
 
-- [`lovable-integration/`](lovable-integration/) - Contains step-by-step guides for creating applications with Lovable's built-in auth system and API integration patterns
+- `lovable-integration/`: end-to-end integration walkthroughs
+- `tech/`: focused technical experiments and utilities
 
-## 2. 🤖 Sharable AI Agent Skills (skill.sh)
+## Contributing
 
-A collection of reusable, shareable skills designed for agentic AI systems. These skills enable AI agents to perform specialized tasks across different domains.
+Contributions are welcome. Please read [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a pull request.
 
-### What are AI Agent Skills?
+## License
 
-AI Agent Skills are modular, reusable components that extend an AI agent's capabilities. Each skill:
+This project is licensed under the MIT License. See [LICENSE](./LICENSE).
 
-- Focuses on a specific domain or task
-- Follows a standardized format (skill.sh)
-- Can be easily integrated into various AI agent systems
-- Provides clear instructions and context for AI agents
+## Support
 
-### Skills Directory
-
-Coming soon - Skills will be organized by category and use case.
-
-## 📁 Repository Structure
-
-```
-freemius-ai/
-├── lovable-integration/     # Lovable platform examples
-│   └── 01-create-app.md    # Building a basic auth-enabled app
-├── skills/                  # AI agent skills (coming soon)
-│   └── ...
-└── README.md               # This file
-```
-
-## 🚀 Getting Started
-
-### For Platform Integration Examples
-
-1. Navigate to the platform folder you're interested in (e.g., `lovable-integration/`)
-2. Follow the numbered guides in sequential order
-3. Each guide contains specific implementation steps and best practices
-
-### For AI Agent Skills
-
-_Coming soon_ - Instructions for using and integrating skills into your AI agent system
-
-## 🤝 Contributing
-
-Contributions are welcome! Whether you have:
-
-- New platform integration examples
-- Additional skills for AI agents
-- Improvements to existing documentation
-- Bug fixes or enhancements
-
-Please feel free to submit a pull request or open an issue.
-
-## 📝 License
-
-_License information to be added_
-
-## 📧 Contact
-
-For questions or suggestions, please open an issue in this repository.
-
----
-
-**Note:** This is an evolving repository. Check back regularly for new integrations, skills, and examples.
+For questions, bug reports, or suggestions, please open an issue in this repository.

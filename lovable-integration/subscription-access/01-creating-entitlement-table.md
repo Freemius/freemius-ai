@@ -3,12 +3,14 @@ We want to integrate Freemius Checkout and Licensing system with our app.
 We need to create a table called `user_fs_entitlement` with the following columns:
 
 - id - The primary key.
-- userId - A foreign key referencing the user table. Value must match with the ID of the user in the lovable auth system (text/string).
+- userId - A foreign key referencing the user table. Value must match with the ID of the user in the lovable auth system
+  (text/string).
 - fsLicenseId - A unique identifier for the Freemius license (text/string).
 - fsPlanId - The Freemius plan ID (text/string).
 - fsPricingId - The Freemius pricing ID (text/string).
 - fsUserId - The Freemius user ID (text/string).
-- type - The entitlement type (e.g., subscription, lifetime, etc.). It could be an enum with value `subscription` or `lifetime`.
+- type - The entitlement type (e.g., subscription, lifetime, etc.). It could be an enum with value `subscription` or
+  `lifetime`.
 - expiration - The license expiration timestamp (nullable).
 - isCanceled - A boolean flag indicating if the license is canceled.
 - createdAt - Timestamp when the record was created.
