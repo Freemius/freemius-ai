@@ -1,7 +1,8 @@
-# Freemius Subscription Integration Guide
+# Freemius Integration for Subscription Based Access in Lovable
 
-A comprehensive step-by-step guide to integrate Freemius subscription management into a Lovable app. Follow each step
-sequentially to implement a complete subscription access flow with entitlements, checkout, and webhook handling.
+This guide demonstrate how you can integrate Freemius into your Lovable SaaS. We assume you want to give a simple
+subscription based access to certain features in your application. If the user has an active subscription, then can
+perform it, otherwise you want to show a button that takes them to the Checkout flow.
 
 ## Prerequisites
 
@@ -10,6 +11,9 @@ Before starting this integration, ensure you have:
 - **Freemius Account** — Register at [Freemius](https://dashboard.freemius.com/register/) and create a SaaS product by
   following [their SaaS Plans & Pricing guide](https://freemius.com/help/documentation/saas/saas-plans-pricing/). Define
   your subscription plans and pricing tiers, then **save your Plan IDs** for use in later steps.
+    - For this guide, we will create two plans, "Starter" and "Pro" with different pricing.
+    - We will keep the integration simple and the plans will not have difference in features, but you can later ask the
+      AI to implement different features for each plan based on the `fsPlanId` field in the entitlement record.
 - **Lovable Account** — Ensure you have access to a Lovable project with authentication and cloud/Supabase backend
   enabled.
 - **Demo App (Optional)** — If you don't have an app yet, start with [Create a Demo App](00-create-app.md) to set up a

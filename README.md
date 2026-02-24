@@ -12,12 +12,8 @@ This repository contains practical resources for building with Freemius in AI-as
 
 ## Getting started
 
-Start with the official Freemius AI documentation: [freemius.com/help/ai](https://freemius.com/help/ai).
-
-Then explore this repository:
-
-- `lovable-integration/`: end-to-end integration walkthroughs
-- `tech/`: focused technical experiments and utilities
+Start with the official [Freemius AI documentation](https://freemius.com/help/documentation/ai/). Then explore this
+repository as mentioned in the documentation itself.
 
 ## Contributing
 

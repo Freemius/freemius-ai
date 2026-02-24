@@ -65,6 +65,10 @@ async function processPurchase(licenseId: string) {
 
     // The record does not include `id` so generate for the upsert.
     // Use the DATABASE upsert functionality to keep the operation atomic
+    const newId = generateUniqueId();
+    const { error } = await db
+        .from('user_fs_entitlement')
+        .upsert({ id: newId, ...entitlementData }, { onConflict: 'fsLicenseId' });
 }
 
 /**
@@ -102,3 +106,7 @@ routes.
 6. Make sure to generate the `id` for the entitlement record when inserting or updating in the database since the
    `entitlementData` does not include it. You can use a UUID generator or any other method to create a unique ID for the
    record.
+7. The `processPurchase` function will have atomic database upsert operation so that the race conditions are handled
+   properly when there are multiple webhook events for the same license in a short period of time. Make sure to use the
+   upsert functionality provided by your database to achieve this. The unique constraint should be `fsLicenseId`, the
+   database is already created in that way.
