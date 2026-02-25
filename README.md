@@ -1,6 +1,7 @@
 # Freemius AI Integrations and Skills
 
-This repository contains practical resources for building with Freemius in AI-assisted development workflows.
+This repository contains practical resources for building with Freemius in
+AI-assisted development workflows.
 
 ## What is included
 
@@ -12,12 +13,14 @@ This repository contains practical resources for building with Freemius in AI-as
 
 ## Getting started
 
-Start with the official [Freemius AI documentation](https://freemius.com/help/documentation/ai/). Then explore this
-repository as mentioned in the documentation itself.
+Start with the official
+[Freemius AI documentation](https://freemius.com/help/documentation/ai/). Then
+explore this repository as mentioned in the documentation itself.
 
 ## Contributing
 
-Contributions are welcome. Please read [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a pull request.
+Contributions are welcome. Please read [CONTRIBUTING.md](./CONTRIBUTING.md)
+before opening a pull request.
 
 ## License
 
@@ -25,4 +28,5 @@ This project is licensed under the MIT License. See [LICENSE](./LICENSE).
 
 ## Support
 
-For questions, bug reports, or suggestions, please open an issue in this repository.
+For questions, bug reports, or suggestions, please open an issue in this
+repository.

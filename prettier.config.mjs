@@ -8,7 +8,7 @@
 export default {
     useTabs: false,
     tabWidth: 4,
-    printWidth: 120,
+    printWidth: 80,
     semi: true,
     singleQuote: true,
     trailingComma: 'es5',

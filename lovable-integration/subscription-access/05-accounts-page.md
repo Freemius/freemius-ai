@@ -1,31 +1,39 @@
-Now we will create an accounts page where the user can see their subscription status and get a link to Freemius Customer
-Portal to manage their subscription.
+## Step 5: Create Accounts Page
 
-1. Create a new page `/accounts` in the front-end, make sure the link is visible in the navigation menu.
-2. The page will also make the same API supabase function call to `functions/v1/get-entitlements` to get the checkout
-   session link and the entitlements.
+Now we will create an accounts page where the user can see their subscription
+status and get a link to Freemius Customer Portal to manage their subscription.
+
+1. Create a new page `/accounts` in the front-end, make sure the link is visible
+   in the navigation menu.
+2. The page will also make the same API supabase function call to
+   `functions/v1/get-entitlements` to get the checkout session link and the
+   entitlements.
 3. If there is an active entitlement, show the "Manage Subscription" button.
-4. For Clicking the "Manage Subscription" button will make another API call to the
-   `functions/v1/get-customer-portal-link` route that we will create now.
-5. In the API route, we will use the Freemius SDK to create a customer portal link and return it to the front-end.
-   (Documentation: https://freemius.com/help/documentation/users-account-management/sso-on-hosted-link/)
+4. For Clicking the "Manage Subscription" button will make another API call to
+   the `functions/v1/get-customer-portal-link` route that we will create now.
+5. In the API route, we will use the Freemius SDK to create a customer portal
+   link and return it to the front-end. (Documentation:
+   https://freemius.com/help/documentation/users-account-management/sso-on-hosted-link/)
 
     ```typescript
     import { freemius } from '../_shared/freemius'; // Correct the path
 
     // Using the email address
-    const { link } = await freemius.api.user.retrieveHostedCustomerPortalByEmail(
-        '...' // Email address of the logged in user, which you can get from the session
-    );
+    const { link } =
+        await freemius.api.user.retrieveHostedCustomerPortalByEmail(
+            '...' // Email address of the logged in user, which you can get from the session
+        );
     ```
 
-6. Once the API returns the link, the front-end will open it in a new tab to let the user manage their subscription. No
-   deep link is needed right now.
-7. If the browser fails to open the tab (due to popup blockers), then show the link to the user and ask them to open it
-   manually.
-    1. The URL must be visible very prominently and clicking it should immediately open the link in a new tab.
-    2. Do show a UI saying the link will expire in 5 mins. You can also add a timer counting down to when the link will
-       expire.
-    3. Hide the URL after 5 mins because it will expire and show the main button again.
-8. If the user doesn't have an active entitlement, show the "Subscribe" button that redirects to the checkout page. The
-   checkout URL is returned from the same `functions/v1/get-entitlements` API route.
+6. Once the API returns the link, the front-end will open it in a new tab to let
+   the user manage their subscription. No deep link is needed right now.
+7. If the browser fails to open the tab (due to popup blockers), then show the
+   link to the user and ask them to open it manually.
+    1. The URL must be visible very prominently and clicking it should
+       immediately open the link in a new tab.
+    2. Do show a UI saying the link will expire in 5 mins. You can also add a
+       timer counting down to when the link will expire.
+    3. Hide the URL after 5 mins because it will expire and show the main button
+       again.
+8. If the user doesn't have an active entitlement, show the "Subscribe" button
+   that takes to the `/pricing` page.

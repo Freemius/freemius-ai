@@ -1,47 +1,59 @@
-Integrate Freemius subscriptions end-to-end in this Lovable app using Supabase functions, shared backend utilities, and
-frontend paywall/account UX.
+Create a minimal application with the following requirements:
 
-## Requirements and constraints
+## Authentication
 
-1. Do not expose Freemius secret credentials in frontend code.
-2. Use Supabase Edge Functions for backend routes.
-3. Use a shared backend module (for example `supabase/functions/_shared/freemius.ts`) so logic is not duplicated.
-4. Add structured logs to all backend routes for debugging.
-5. Keep sandbox checkout disabled by default (`SANDBOX = false`) unless explicitly requested.
-6. Use environment secrets for:
-    - `FREEMIUS_PRODUCT_ID`
-    - `FREEMIUS_API_KEY`
-    - `FREEMIUS_SECRET_KEY`
-    - `FREEMIUS_PUBLIC_KEY`
-7. Assume `user_fs_entitlement` already exists and contains Freemius entitlement records with fields matching Freemius
-   purchase mapping (license ID, plan/pricing IDs, fs user ID, type, expiration, createdAt, isCanceled, user relation,
-   etc.). If small schema mismatches exist, adapt mapping safely in code.
+- Implement login/registration using Lovable's built-in auth system
+- All pages except login/register should require authentication
+- Have the lovable cloud and authentication system enabled and properly
+  configured
 
-Documentation links (reference):
+## Dashboard Page
 
-- https://freemius.com/help/documentation/saas-sdk/js-sdk/integration/
+- After login, show a Dashboard with:
+    - A welcoming header: "Welcome back, {user.name}"
+    - A section in the Navigation bar showing "Account Status: Free" (this will
+      be updated later to reflect subscription status)
+    - A "Premium Action" button (nice, prominent design)
 
-## Install and shared backend module
+## Premium Action Feature
 
-1. Install Freemius SDK dependencies if needed:
-    - `@freemius/sdk`
-    - `@freemius/checkout`
-    - `zod`
-2. Create/update shared backend file `supabase/functions/_shared/freemius.ts`:
-    - Initialize `Freemius` from env secrets.
-    - Export constants:
-        - `LIVE_SUPABASE_URL` (production Supabase functions base URL for redirect verification)
-        - `LIVE_FRONTEND_URL` (production frontend URL)
-    - Implement and export:
-        - `getUserEntitlement(userId: string)`: read user records from `user_fs_entitlement`, then return active
-          entitlement via `freemius.entitlement.getActive(...)`.
-        - `processPurchase(licenseId: string)`: retrieve purchase from Freemius, resolve app user by email, map purchase
-          to entitlement shape, upsert atomically in `user_fs_entitlement` by Freemius license ID. Ensure `id` exists
-          (generate UUID when needed).
-        - `createFreemiusCheckout(user: { email: string; firstName?: string; lastName?: string })`: create checkout and
-          return hosted link.
+- Clicking the "Premium Action" button triggers a server API call to
+  `/api/premium-action`
+- The API endpoint should:
+    - Verify the user is authenticated (return 401 if not)
+    - Return success response:
+      `{ success: true, message: "Premium action completed!" }`
+- Display the result message to the user in the UI (success state)
 
-Code snippet (reference):
+## UI/UX Considerations
+
+- Use a clean, modern design with a consistent color scheme
+- Add a simple navigation header with:
+    - App logo/name
+    - User profile menu (with logout option)
+- Make the "Account Status" section visually distinct (will be used later for
+  subscription info)
+- Keep the overall layout professional but minimal
+
+# Step 1: Create Entitlement Table
+
+We need to create a table called `user_fs_entitlement` with the following
+columns:
+
+- id - The primary key.
+- userId - A foreign key referencing the user table. Value must match with the
+  ID of the user in the lovable auth system (text/string).
+- fsLicenseId - A unique identifier for the Freemius license (text/string).
+- fsPlanId - The Freemius plan ID (text/string).
+- fsPricingId - The Freemius pricing ID (text/string).
+- fsUserId - The Freemius user ID (text/string).
+- type - The entitlement type (e.g., subscription, lifetime, etc.). It could be
+  an enum with value `subscription` or `lifetime`.
+- expiration - The license expiration timestamp (nullable).
+- isCanceled - A boolean flag indicating if the license is canceled.
+- createdAt - Timestamp when the record was created.
+
+Here is a SQL equivalent, please adapt it for the lovable platform (supabase)
 
 ```sql
 -- First create the enum type
@@ -66,6 +78,22 @@ CREATE TABLE user_fs_entitlement (
 CREATE INDEX idx_user_fs_entitlement_type ON user_fs_entitlement (type);
 ```
 
+This table will hold purchase information coming from Freemius.
+
+- Enable RLS and make sure to setup appropriate policies.
+- Users can only READ their own entitlements
+- Users cannot CREATE, UPDATE or DELETE any entitlements (only the server can do
+  that)
+
+# Step 2: Install Freemius SDK and Create Shared Backend Module
+
+We will install the Freemius JS SDK for backend. This is strictly meant for
+backend and should not be exposed in the frontend. The package is
+`@freemius/sdk`.
+
+Create a file called `supabase/functions/_shared/freemius.ts` for
+backend/supabase and put the following code in it:
+
 ```ts
 import { Freemius } from 'npm:@freemius/sdk';
 
@@ -78,6 +106,10 @@ export const freemius = new Freemius({
 
 const SANDBOX = false; // Change this to true if you want to test in sandbox mode
 
+/**
+ * Get the active entitlement for a user based on the records in the database.
+ * This function will be used in the API route to get the user's entitlement information.
+ */
 async function getUserEntitlement(userId: string) {
     // Somehow read from the `user_fs_entitlement` table where the userId matches.
     const entitlements = await someDbCall();
@@ -86,6 +118,9 @@ async function getUserEntitlement(userId: string) {
     return freemius.entitlement.getActive(entitlements);
 }
 
+/**
+ * Create a Function to synchronize the entitlement information to the database.
+ */
 async function processPurchase(licenseId: string) {
     const purchaseInfo = await freemius.purchase.retrievePurchase(licenseId);
     const localUser = await getUserFromDb(purchaseInfo.email);
@@ -109,45 +144,127 @@ async function processPurchase(licenseId: string) {
 
     // The record does not include `id` so generate for the upsert.
     // Use the DATABASE upsert functionality to keep the operation atomic
+    const newId = generateUniqueId();
+    const { error } = await db
+        .from('user_fs_entitlement')
+        .upsert(
+            { id: newId, ...entitlementData },
+            { onConflict: 'fsLicenseId' }
+        );
 }
+type PricingData = {
+    annual: number | null;
+    monthly: number | null;
+    planId: string;
+    title: string;
+    checkoutUrl: string;
+    features: { title: string; value: string }[];
+};
 
-async function createFreemiusCheckout(user: { email: string; firstName?: string; lastName?: string }): Promise<string> {
+/**
+ * Create a Checkout session for the user.
+ */
+async function createFreemiusCheckout(
+    user: { email: string; firstName?: string; lastName?: string },
+    planId?: string
+): Promise<string> {
+    // @ts-expect-error - The planId can be undefined and depending on some TS config it can cause error, but in practice this is fine.
     const checkout = await freemius.checkout.create({
         user,
+        planId: planId,
         isSandbox: SANDBOX,
     });
 
     return checkout.getLink();
 }
 
-export const LIVE_SUPABASE_URL = 'https://xyz.supabase.co/functions/v1/process-checkout'; // Change this to your actual URL
+async function getPricingData(user: {
+    email: string;
+    firstName?: string;
+    lastName?: string;
+}): Promise<PricingData[]> {
+    const productPricing = await freemius.api.product.retrievePricingData();
+
+    const data: PricingData[] = [];
+
+    for (const plan of productPricing?.plans ?? []) {
+        if (plan.is_hidden) {
+            continue;
+        }
+
+        data.push({
+            annual: plan.pricing?.[0]?.annual_price ?? null,
+            monthly: plan.pricing?.[0]?.monthly_price ?? null,
+            planId: plan.id!,
+            title: plan.title!,
+            checkoutUrl: await createFreemiusCheckout(user, plan.id!),
+            features:
+                plan.features?.map((feature) => ({
+                    title: feature.title!,
+                    value: feature.value!,
+                })) ?? [],
+        });
+    }
+
+    return data;
+}
+
+export const LIVE_SUPABASE_URL =
+    'https://xyz.supabase.co/functions/v1/process-checkout'; // Change this to your actual URL
+
 export const LIVE_FRONTEND_URL = 'https://your-frontend-url.com'; // Change this to your actual frontend URL
 ```
 
-Documentation links (reference):
+Store all credentials securely inside the "Secrets" section of the Lovable
+dashboard.
 
-- https://freemius.com/help/documentation/saas-sdk/js-sdk/integration/#using-entitlement-logic
+The file must be created under `supabase/functions/_shared` or any other shared
+location that can be imported in our API routes.
 
-## Checkout redirect processing route
+1. The documentation is available here:
+   https://freemius.com/help/documentation/saas-sdk/js-sdk/integration/#using-entitlement-logic
+2. The `freemius.entitlement.getActive` method accepts an array of DB records
+   from the `user_fs_entitlement` table and returns the active entitlement based
+   on the expiration date and cancellation status. You can use this code as-is.
+3. The `createFreemiusCheckout` and `getPricingData` function must receive the
+   email and the other firstName and lastName are optional. Try to get those
+   data from the current auth session if available.
+4. The code given is just for demonstration purposes, you will need to adapt it
+   to your application's structure and database access method.
+5. If you are unsure about the `LIVE_SUPABASE_URL` try to get from some platform
+   config if not fallback to asking the user.
+6. Make sure to generate the `id` for the entitlement record when inserting or
+   updating in the database since the `entitlementData` does not include it. You
+   can use a UUID generator or any other method to create a unique ID for the
+   record.
+7. The `processPurchase` function will have atomic database upsert operation so
+   that the race conditions are handled properly when there are multiple webhook
+   events for the same license in a short period of time. Make sure to use the
+   upsert functionality provided by your database to achieve this. The unique
+   constraint should be `fsLicenseId`, the database is already created in that
+   way.
 
-Create `supabase/functions/process-checkout/index.ts` as a public GET route:
+# Step 3: Create Checkout Redirection Process Route
 
-1. Parse current request URL.
-2. Rebuild URL for signature validation by taking `LIVE_SUPABASE_URL` and appending the incoming query string to it.
-   (Important for Freemius redirect signature verification.)
-3. Call `freemius.checkout.processRedirect(modifiedCurrentUrlString, LIVE_SUPABASE_URL)`.
-4. If redirect info has `license_id`, call `processPurchase(license_id)`.
-5. Redirect user to frontend result page with query params indicating success/failure and message.
-6. Add clear logging for start, verification, license processing, and redirect result.
-7. Also create frontend `/checkout-result` page that reads query params, shows status message, then routes user to
-   dashboard after a short delay.
+We will create a redirection processor for the checkout so that entitlements are
+given to the user. The Freemius Checkout will redirect to this route after
+purchase with some query parameters, and we can use that information to verify
+the purchase and update our database accordingly.
 
-Code snippet (reference):
+The route will be `supabase/functions/process-checkout/index.ts` and will use
+the Freemius SDK to verify the checkout and update the `user_fs_entitlement`
+table.
 
-```ts
-import { freemius, processPurchase, LIVE_SUPABASE_URL, LIVE_FRONTEND_URL } from '../_shared/freemius'; // Correct the path
+```typescript
+import {
+    freemius,
+    processPurchase,
+    LIVE_SUPABASE_URL,
+    LIVE_FRONTEND_URL,
+} from '../_shared/freemius'; // Correct the path
 
 // Process the GET request on this route.
+
 const currentUrl = request.url;
 
 /**
@@ -160,168 +277,236 @@ modifiedCurrentUrl.search = url.search;
 const modifiedCurrentUrlString = modifiedCurrentUrl.toString();
 
 // Validate the redirect (SDK does signature validation) and get the information
-const redirectInfo = await freemius.checkout.processRedirect(modifiedCurrentUrlString, LIVE_SUPABASE_URL);
+const redirectInfo = await freemius.checkout.processRedirect(
+    modifiedCurrentUrlString,
+    LIVE_SUPABASE_URL
+);
 
 // Process the purchase from redirectInfo if possible
 if (redirectInfo?.license_id) {
     processPurchase(redirectInfo.license_id);
 }
 
+// Once done redirect to a specific front-end page with a success message or error message based on the result of the process. For this you can use a redirection header with the URL of the front-end page and pass query parameters to indicate success or failure and the message to show.
 return new Response(null, {
     status: 302,
     headers: {
-        Location: `${LIVE_FRONTEND_URL}/checkout-result?success=true`,
+        Location: `${LIVE_FRONTEND_URL}/checkout-result?success=true`, // Change this to your actual front-end URL and page
     },
 });
+// Adapt the code to lovable platform's way of handling redirections as needed.
 ```
 
-Documentation links (reference):
+1. The documentation is available under
+   https://freemius.com/help/documentation/saas-sdk/js-sdk/integration/#hosted-checkout
+2. All the functions from `freemius` are real methods and read the comments to
+   understand what they do
+3. Make sure the redirect route actually redirects to the front-end after
+   processing the checkout with an appropriate message using redirection headers
+   and query strings. Also create the front-end page to read those query
+   parameters and show the message to the user. The front-end will redirect to
+   the dashboard after showing the message.
+4. Adapt the code to match your application's structure and database access
+   method.
+5. Share the URL for me so that I can enter it in the Freemius Developer
+   Dashboard.
+6. Add detailed logs in the backend redirection handler to make sure we can
+   debug any issues that might come up in the process.
+7. Make sure you follow the trick to fix the URL for the signature verification
+   by appending the query parameters to the `LIVE_SUPABASE_URL` instead of using
+   the current request URL directly.
 
-- https://freemius.com/help/documentation/saas-sdk/js-sdk/integration/#hosted-checkout
+# Step 4: API Route and Front-end Paywall Implementation
 
-## Entitlements API + paywall integration
+The purpose is to
 
-Create `supabase/functions/get-entitlements/index.ts`:
+- API endpoint to get user's entitlement from the local database.
+- Front-end to call that endpoint when needed.
+- New pricing page to show the pricing information and the checkout link for
+  each plan.
 
-1. Authenticate caller from Supabase auth context.
-2. Get logged-in user identity (email, firstName/lastName if available).
-3. Call shared methods to fetch active entitlement and create checkout URL.
-4. Return `{ entitlement, checkoutUrl }`.
-5. Handle errors with appropriate HTTP status and logs.
-6. Ensure route works with frontend `supabase.functions.invoke`.
+## Backend API Route
 
-Frontend integration:
+Create an API route in the backend/supabase from where we can get the currently
+logged in user's entitlements. This will be used in the frontend to check if the
+user has an active subscription or not. Use the Freemius JS SDK instance that we
+created in the previous step.
 
-1. On app load (or auth-ready state), call `functions/v1/get-entitlements`.
-2. If active entitlement exists:
-    - Show `Premium` indicator in navbar (where free status is currently shown).
-    - Enable/reveal premium UI/actions.
-3. If no active entitlement:
-    - Show `Subscribe` CTA in navbar.
-    - Disable/lock premium actions with clear hint text.
-    - Show a second `Subscribe` CTA near premium action(s), both using returned checkout URL.
-4. For every backend endpoint representing premium features, enforce entitlement check server-side using
-   `getUserEntitlement(...)`; return correct authorization error when missing entitlement.
+Create the route under `supabase/functions/get-entitlements/index.ts` and put
+the following code in it:
 
-Code snippet (reference):
+```typescript
+import { getUserEntitlement } from '../_shared/freemius'; // Correct the path
 
-```ts
-import { getUserEntitlement, createFreemiusCheckout } from '../_shared/freemius'; // Correct the path
+// Now create the API route handler that will call the above functions and return the entitlement information to the frontend. Make sure to handle authentication and only allow access to the entitlements of the currently logged in user.
 
-// API route handler:
-// - Authenticate current user
-// - Return { entitlement: Entitlement | null, checkoutUrl: string }
-// - Must work with supabase.functions.invoke from frontend
+// The return data needs to be of the shape { entitlement: Entitlement | null }
 ```
 
-## Accounts page + customer portal SSO
+Create another route under `supabase/functions/get-pricing-data/index.ts` that
+will return the pricing data for the plans from Freemius. This will be used in
+the front-end to show the pricing information and also to get the checkout URL
+for each plan.
 
-Create `/accounts` page and link it in navigation:
+```typescript
+import { getPricingData, PricingData } from '../_shared/freemius'; // Correct the path
+// Now create the API route handler that will call the above function and return the pricing information to the frontend. Make sure to handle authentication and only allow access to logged in users. Pass the user information to the `getPricingData` function to generate the checkout URL for each plan based on the user information if needed.
 
-1. Reuse `get-entitlements` response.
-2. If active entitlement, show `Manage Subscription`.
-3. Add new backend route `supabase/functions/get-customer-portal-link/index.ts`:
-    - Authenticate user.
-    - Use logged-in user email with `freemius.api.user.retrieveHostedCustomerPortalByEmail(email)`.
-    - Return hosted customer portal link.
-4. On `Manage Subscription` click:
-    - Call route and open link in new tab.
-    - If popup blocked, show prominent clickable fallback URL.
-    - Show message that link expires in 5 minutes and display countdown.
-    - Hide fallback link after expiration and show main button again.
-5. If no active entitlement on `/accounts`, show `Subscribe` button using checkout URL.
-
-Code snippet (reference):
-
-```ts
-import { freemius } from '../_shared/freemius'; // Correct the path
-
-// Using the email address from logged-in user session
-const { link } = await freemius.api.user.retrieveHostedCustomerPortalByEmail(
-    '...' // Email address
-);
+// The return data needs to be of the shape {pricingData: PricingData[]}
 ```
 
-Documentation links (reference):
+Add some console logs to the API route to make it easier to debug and test. It
+needs to support POST API methods or anything that comes with
+`supabase.functions.invoke` from the frontend.
 
-- https://freemius.com/help/documentation/users-account-management/sso-on-hosted-link/
+## Front-end Implementation
 
-## Webhook route for license sync
+1. The front-end when loading will make API call to the
+   `functions/v1/get-entitlements` using `supabase.functions.invoke`.
+2. If there is an active entitlement, then the front-end will
+    1. Show a "Premium" badge in the navbar where currently it shows "Account
+       Status: Free"
+    2. Reveal all the UI from where the user can make use of the premium
+       features (for example the "Premium Action" button on the dashboard)
+3. If there is no active entitlement, then the front-end will
+    1. Show a "Subscribe" button in the navbar where currently it shows "Account
+       Status: Free"
+    2. Disable all the UI from where the user can make use of the premium
+       features (for example the "Premium Action" button on the dashboard). It
+       can also hint that a subscription is required to access those features.
+       And also show the same "Subscribe" button next to the "Premium Action"
+       button in the dashboard to make it easier for the user to find how to
+       subscribe. Have it link to the same Checkout URL as the one in the
+       navbar.
+    3. Clicking the "Subscribe" button will take to a new page `/pricing`.
+4. The `/pricing` page will show the pricing information for the plans that we
+   get from the `functions/v1/get-pricing-data` API route and also a "Subscribe"
+   button for each plan that will link to the checkout URL for that plan.
+    - Create a simple and working UI for this. Use the data structure of
+      `PricingData` that we have in the shared module to design the UI and show
+      the information, show plan title, annual/monthly price
 
-Create `supabase/functions/webhook/index.ts` and wire Freemius webhook verification/processing:
+## Protecting Server Actions
 
-1. Configure listener with API authentication method.
-2. Handle license-related events:
-    - `license.created`
-    - `license.extended`
-    - `license.shortened`
-    - `license.updated`
-    - `license.cancelled`
-    - `license.expired`
-    - `license.plan.changed`
-3. For each event with a license ID, call `processPurchase(license.id)` to sync local entitlements.
-4. Read raw request body and pass headers + raw body into SDK listener processor.
-5. Return 2xx quickly to avoid retries; keep processing robust and logged.
-6. Add detailed error logging around listener processing.
+All backend server action that must be behind a paywall will check the
+`getUserEntitlement` from the `_shared/freemius.ts` file to verify if the user
+has an active entitlement before allowing access to the feature. If the user
+does not have an active entitlement, the API route should return an appropriate
+error message and status code.
 
-Code snippet (reference):
+## Step 5: Create Accounts Page
 
-```ts
-import { freemius, processPurchase } from '../_shared/freemius'; // Correct the path
-import { WebhookAuthenticationMethod, WebhookEventType } from 'npm:@freemius/sdk';
+Now we will create an accounts page where the user can see their subscription
+status and get a link to Freemius Customer Portal to manage their subscription.
 
-const listener = freemius.webhook.createListener({
-    authenticationMethod: WebhookAuthenticationMethod.Api,
-});
+1. Create a new page `/accounts` in the front-end, make sure the link is visible
+   in the navigation menu.
+2. The page will also make the same API supabase function call to
+   `functions/v1/get-entitlements` to get the checkout session link and the
+   entitlements.
+3. If there is an active entitlement, show the "Manage Subscription" button.
+4. For Clicking the "Manage Subscription" button will make another API call to
+   the `functions/v1/get-customer-portal-link` route that we will create now.
+5. In the API route, we will use the Freemius SDK to create a customer portal
+   link and return it to the front-end. (Documentation:
+   https://freemius.com/help/documentation/users-account-management/sso-on-hosted-link/)
 
-const licenseEvents: WebhookEventType[] = [
-    'license.created',
-    'license.extended',
-    'license.shortened',
-    'license.updated',
-    'license.cancelled',
-    'license.expired',
-    'license.plan.changed',
-];
+    ```typescript
+    import { freemius } from '../_shared/freemius'; // Correct the path
 
-listener.on(licenseEvents, async ({ objects: { license } }) => {
-    if (license && license.id) {
-        await processPurchase(license.id);
-    }
-});
+    // Using the email address
+    const { link } =
+        await freemius.api.user.retrieveHostedCustomerPortalByEmail(
+            '...' // Email address of the logged in user, which you can get from the session
+        );
+    ```
 
-const rawBody = await request.text();
+6. Once the API returns the link, the front-end will open it in a new tab to let
+   the user manage their subscription. No deep link is needed right now.
+7. If the browser fails to open the tab (due to popup blockers), then show the
+   link to the user and ask them to open it manually.
+    1. The URL must be visible very prominently and clicking it should
+       immediately open the link in a new tab.
+    2. Do show a UI saying the link will expire in 5 mins. You can also add a
+       timer counting down to when the link will expire.
+    3. Hide the URL after 5 mins because it will expire and show the main button
+       again.
+8. If the user doesn't have an active entitlement, show the "Subscribe" button
+   that takes to the `/pricing` page.
 
-let result = listener
-    .process({
-        headers: req.headers,
-        rawBody: rawBody,
-    })
-    .catch((error) => {
-        console.error('Error processing Freemius webhook:', error);
+# Step 6: Webhook Integration
+
+Now we will setup webhook for Freemius to synchronize license and subscription
+changes to the `user_fs_entitlement` table in our database.
+
+1. Create a new API route `functions/v1/webhook` that will be used as the
+   webhook URL for Freemius. This route will receive POST requests from Freemius
+   whenever there is a change in the license or subscription status.
+2. To process the webhook, we will use the Freemius SDK. (Documentation:
+   https://freemius.com/help/documentation/saas-sdk/js-sdk/integration/#handling-license-updates-via-webhooks)
+
+    ```typescript
+    import { freemius, processPurchase } from '../_shared/freemius'; // Correct the path
+    import {
+        WebhookAuthenticationMethod,
+        WebhookEventType,
+    } from 'npm:@freemius/sdk';
+
+    const listener = freemius.webhook.createListener({
+        authenticationMethod: WebhookAuthenticationMethod.Api,
     });
 
-// Return 2xx quickly without waiting for the listener to finish processing
-```
+    // Freemius events to listen to
+    const licenseEvents: WebhookEventType[] = [
+        'license.created',
+        'license.extended',
+        'license.shortened',
+        'license.updated',
+        'license.cancelled',
+        'license.expired',
+        'license.plan.changed',
+    ];
 
-Documentation links (reference):
+    listener.on(licenseEvents, async ({ objects: { license } }) => {
+        if (license && license.id) {
+            await processPurchase(license.id);
+        }
+    });
 
-- https://freemius.com/help/documentation/saas-sdk/js-sdk/integration/#handling-license-updates-via-webhooks
+    // Get the raw body from the request
+    const rawBody = await request.text();
 
-## Finalization checklist
+    // Now process it with the Freemius SDK, but intentionally don't await it to make sure we pass a 2xx response to Freemius as soon as possible and avoid retries. We will handle the processing asynchronously and add detailed logs to make sure we can debug any issues that might come up in the process.
+    let result = listener
+        .process({
+            headers: req.headers,
+            rawBody: rawBody,
+        })
+        .catch((error) => {
+            console.error('Error processing Freemius webhook:', error);
+        });
 
-1. Confirm all URLs use production values where required (`LIVE_FRONTEND_URL`, `LIVE_SUPABASE_URL`) when app is
-   published.
-2. Confirm checkout is not sandbox unless explicitly requested.
-3. Verify all premium backend routes are protected with entitlement checks.
-4. Verify user journey end-to-end:
-    - Free user sees subscribe UI
-    - Checkout redirect processes and grants entitlement
-    - Premium UI unlocks
-    - Accounts page can open customer portal
-    - Webhook updates entitlement state on cancellation/expiration/plan change
-5. Provide me with exact URLs to configure in Freemius dashboard:
-    - Checkout redirect URL (`/functions/v1/process-checkout`)
-    - Webhook URL (`/functions/v1/webhook`)
+    // Pass a 2xx response to Freemius.
+    ```
 
-Implement all of this now. If project structure differs, adapt paths and naming but preserve behavior.
+3. Adjust the code to the platform specifics and add console logs for easier
+   debugging.
+4. Share the URL for me to add it in the Freemius Developer Dashboard.
+
+# Step 7: Finalization
+
+Now that the Freemius Licensing integraiton is complete, please check the
+followings:
+
+1. The checkout generation under `_shared/freemius.ts` file is not sandbox
+   unless that's what I explicitly want for testing.
+2. We don't have any additional endpoints that needs to be protected by the
+   paywall, but if you have any, make sure to add the entitlement check in those
+   endpoints as well. Use the shared function in `_shared/freemius.ts` to get
+   the user's entitlements and check if there is an active one before allowing
+   access to the feature.
+3. If the app has been published, make sure to update all front-end URLs to
+   point to the production URL instead of the local development URL inside
+   `_shared/freemius.ts`.
+4. Make sure all references to the supabase URL in the code are updated to the
+   production URL if the app has been published.

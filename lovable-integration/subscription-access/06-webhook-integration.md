@@ -1,14 +1,20 @@
-Now we will setup webhook for Freemius to synchronize license and subscription changes to the `user_fs_entitlement`
-table in our database.
+# Step 6: Webhook Integration
 
-1. Create a new API route `functions/v1/webhook` that will be used as the webhook URL for Freemius. This route will
-   receive POST requests from Freemius whenever there is a change in the license or subscription status.
+Now we will setup webhook for Freemius to synchronize license and subscription
+changes to the `user_fs_entitlement` table in our database.
+
+1. Create a new API route `functions/v1/webhook` that will be used as the
+   webhook URL for Freemius. This route will receive POST requests from Freemius
+   whenever there is a change in the license or subscription status.
 2. To process the webhook, we will use the Freemius SDK. (Documentation:
    https://freemius.com/help/documentation/saas-sdk/js-sdk/integration/#handling-license-updates-via-webhooks)
 
     ```typescript
     import { freemius, processPurchase } from '../_shared/freemius'; // Correct the path
-    import { WebhookAuthenticationMethod, WebhookEventType } from 'npm:@freemius/sdk';
+    import {
+        WebhookAuthenticationMethod,
+        WebhookEventType,
+    } from 'npm:@freemius/sdk';
 
     const listener = freemius.webhook.createListener({
         authenticationMethod: WebhookAuthenticationMethod.Api,
@@ -47,5 +53,6 @@ table in our database.
     // Pass a 2xx response to Freemius.
     ```
 
-3. Adjust the code to the platform specifics and add console logs for easier debugging.
+3. Adjust the code to the platform specifics and add console logs for easier
+   debugging.
 4. Share the URL for me to add it in the Freemius Developer Dashboard.

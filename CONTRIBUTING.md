@@ -59,6 +59,12 @@ You can also run formatting from the command line:
 - `npm run format`
 - `npm run format:check`
 
+## Build Scripts
+
+We have some build scripts to concatenate the markdown files into a single file
+for easier reading. You can run `npm run build` before deployment to the `main`
+branch.
+
 ## Reporting issues
 
 When opening an issue, include:

@@ -25,7 +25,8 @@ Deno.test({
             publicKey: publicKey!,
         });
 
-        const LIVE_URL = 'https://kqiqetpmyyfkdxyikzas.supabase.co/functions/v1/process-checkout';
+        const LIVE_URL =
+            'https://kqiqetpmyyfkdxyikzas.supabase.co/functions/v1/process-checkout';
 
         const currentUrl =
             'http://kqiqetpmyyfkdxyikzas.supabase.co/process-checkout?user_id=5723112&plan_id=40822&email=swas%40freemius.com&pricing_id=53801&currency=usd&action=purchase&subscription_id=756770&billing_cycle=12&amount=191.88&tax=0&license_id=1865045&expiration=2027-02-19+15%3A16%3A02&quota=1&signature=8d413e6c8ca64e96d6326aa5909afc5320bf12bca76556bb6ab0ba470a9bfdda';
@@ -39,7 +40,10 @@ Deno.test({
         modifiedCurrentUrl.search = url.search;
         const modifiedCurrentUrlString = modifiedCurrentUrl.toString();
 
-        const redirectInfo = await freemius.checkout.processRedirect(modifiedCurrentUrlString, LIVE_URL);
+        const redirectInfo = await freemius.checkout.processRedirect(
+            modifiedCurrentUrlString,
+            LIVE_URL
+        );
 
         assert(redirectInfo !== null, 'Redirect info should not be null');
     },

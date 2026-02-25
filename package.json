@@ -1,15 +1,20 @@
 {
   "name": "freemius-ai",
   "version": "0.1.0",
+  "type": "module",
   "private": true,
   "description": "Freemius AI integrations and skills repository tooling",
   "license": "MIT",
   "scripts": {
+    "prompt:concat:lovable:1": "node scripts/prompt-concat.js lovable-integration/subscription-access",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
-    "prepare": "husky"
+    "prepare": "husky",
+    "build": "npm run prompt:concat:lovable:1"
   },
   "devDependencies": {
+    "chalk": "^5.6.2",
+    "ora": "^9.3.0",
     "prettier": "^3.8.1"
   }
 }

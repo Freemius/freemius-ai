@@ -1,13 +1,11 @@
-We will install the Freemius JS SDK for backend. This is strictly meant for backend and should not be exposed in the
-frontend. Use the following command to install it:
+# Step 2: Install Freemius SDK and Create Shared Backend Module
 
-```bash
-npm install @freemius/sdk @freemius/checkout zod
-```
+We will install the Freemius JS SDK for backend. This is strictly meant for
+backend and should not be exposed in the frontend. The package is
+`@freemius/sdk`.
 
-We probably don't need to install anything if lovable is using Deno.
-
-Now create a file called `freemius.ts` for backend/supabase and put the following code in it:
+Create a file called `supabase/functions/_shared/freemius.ts` for
+backend/supabase and put the following code in it:
 
 ```ts
 import { Freemius } from 'npm:@freemius/sdk';
@@ -18,13 +16,7 @@ export const freemius = new Freemius({
     secretKey: Deno.env.get('FREEMIUS_SECRET_KEY')!,
     publicKey: Deno.env.get('FREEMIUS_PUBLIC_KEY')!,
 });
-```
 
-Inside the same file we will also create a few more functions for getting user entitlement and updating the user
-entitlement in the database and generating checkout. We will use these functions in the API routes that we will create
-later.
-
-```typescript
 const SANDBOX = false; // Change this to true if you want to test in sandbox mode
 
 /**
@@ -68,45 +60,99 @@ async function processPurchase(licenseId: string) {
     const newId = generateUniqueId();
     const { error } = await db
         .from('user_fs_entitlement')
-        .upsert({ id: newId, ...entitlementData }, { onConflict: 'fsLicenseId' });
+        .upsert(
+            { id: newId, ...entitlementData },
+            { onConflict: 'fsLicenseId' }
+        );
 }
+type PricingData = {
+    annual: number | null;
+    monthly: number | null;
+    planId: string;
+    title: string;
+    checkoutUrl: string;
+    features: { title: string; value: string }[];
+};
 
 /**
  * Create a Checkout session for the user.
  */
-async function createFreemiusCheckout(user: { email: string; firstName?: string; lastName?: string }): Promise<string> {
+async function createFreemiusCheckout(
+    user: { email: string; firstName?: string; lastName?: string },
+    planId?: string
+): Promise<string> {
+    // @ts-expect-error - The planId can be undefined and depending on some TS config it can cause error, but in practice this is fine.
     const checkout = await freemius.checkout.create({
         user,
+        planId: planId,
         isSandbox: SANDBOX,
     });
 
     return checkout.getLink();
 }
 
-export const LIVE_SUPABASE_URL = 'https://xyz.supabase.co/functions/v1/process-checkout'; // Change this to your actual URL
+async function getPricingData(user: {
+    email: string;
+    firstName?: string;
+    lastName?: string;
+}): Promise<PricingData[]> {
+    const productPricing = await freemius.api.product.retrievePricingData();
+
+    const data: PricingData[] = [];
+
+    for (const plan of productPricing?.plans ?? []) {
+        if (plan.is_hidden) {
+            continue;
+        }
+
+        data.push({
+            annual: plan.pricing?.[0]?.annual_price ?? null,
+            monthly: plan.pricing?.[0]?.monthly_price ?? null,
+            planId: plan.id!,
+            title: plan.title!,
+            checkoutUrl: await createFreemiusCheckout(user, plan.id!),
+            features:
+                plan.features?.map((feature) => ({
+                    title: feature.title!,
+                    value: feature.value!,
+                })) ?? [],
+        });
+    }
+
+    return data;
+}
+
+export const LIVE_SUPABASE_URL =
+    'https://xyz.supabase.co/functions/v1/process-checkout'; // Change this to your actual URL
 
 export const LIVE_FRONTEND_URL = 'https://your-frontend-url.com'; // Change this to your actual frontend URL
 ```
 
-Store all credentials securely inside the "Secrets" section of the Lovable dashboard.
+Store all credentials securely inside the "Secrets" section of the Lovable
+dashboard.
 
-The file can be created under `supabase/functions/_shared` or any other shared location that can be imported in our API
-routes.
+The file must be created under `supabase/functions/_shared` or any other shared
+location that can be imported in our API routes.
 
 1. The documentation is available here:
    https://freemius.com/help/documentation/saas-sdk/js-sdk/integration/#using-entitlement-logic
-2. The `freemius.entitlement.getActive` method accepts an array of DB records from the `user_fs_entitlement` table and
-   returns the active entitlement based on the expiration date and cancellation status. You can use this code as-is.
-3. The `createFreemiusCheckout` function must receive the email and the other firstName and lastName are optional. Try
-   to get those data from the current auth session if available.
-4. The code given is just for demonstration purposes, you will need to adapt it to your application's structure and
-   database access method.
-5. If you are unsure about the LIVE_SUPABASE_URL try to get from some platform config if not fallback to asking the
-   user.
-6. Make sure to generate the `id` for the entitlement record when inserting or updating in the database since the
-   `entitlementData` does not include it. You can use a UUID generator or any other method to create a unique ID for the
+2. The `freemius.entitlement.getActive` method accepts an array of DB records
+   from the `user_fs_entitlement` table and returns the active entitlement based
+   on the expiration date and cancellation status. You can use this code as-is.
+3. The `createFreemiusCheckout` and `getPricingData` function must receive the
+   email and the other firstName and lastName are optional. Try to get those
+   data from the current auth session if available.
+4. The code given is just for demonstration purposes, you will need to adapt it
+   to your application's structure and database access method.
+5. If you are unsure about the `LIVE_SUPABASE_URL` try to get from some platform
+   config if not fallback to asking the user.
+6. Make sure to generate the `id` for the entitlement record when inserting or
+   updating in the database since the `entitlementData` does not include it. You
+   can use a UUID generator or any other method to create a unique ID for the
    record.
-7. The `processPurchase` function will have atomic database upsert operation so that the race conditions are handled
-   properly when there are multiple webhook events for the same license in a short period of time. Make sure to use the
-   upsert functionality provided by your database to achieve this. The unique constraint should be `fsLicenseId`, the
-   database is already created in that way.
+7. The `processPurchase` function will have atomic database upsert operation so
+   that the race conditions are handled properly when there are multiple webhook
+   events for the same license in a short period of time. Make sure to use the
+   upsert functionality provided by your database to achieve this. The unique
+   constraint should be `fsLicenseId`, the database is already created in that
+   way.
