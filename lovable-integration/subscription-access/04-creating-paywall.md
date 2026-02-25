@@ -1,4 +1,4 @@
-# Step 4: API Route and Front-end Paywall Implementation
+# Step 4: Paywall Implementation
 
 The purpose is to
 
@@ -66,7 +66,11 @@ needs to support POST API methods or anything that comes with
    button for each plan that will link to the checkout URL for that plan.
     - Create a simple and working UI for this. Use the data structure of
       `PricingData` that we have in the shared module to design the UI and show
-      the information, show plan title, annual/monthly price
+      the information, show plan title, annual/monthly price.
+    - If the user already has an active subscription, show a message saying "You
+      already have an active subscription" and hide the pricing information and
+      the subscribe buttons. Add a link to a `/account` page that we will create
+      in the next step.
 
 ## Protecting Server Actions
 
