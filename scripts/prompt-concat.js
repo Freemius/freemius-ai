@@ -6,7 +6,7 @@ import chalk from 'chalk';
 import ora from 'ora';
 
 const NUMERIC_MD_FILE = /^(\d+)-.+\.md$/i;
-const SKIP_PREFIXES = new Set(['00-', 'internal-']);
+const SKIP_PREFIXES = new Set(['00']);
 const OUTPUT_FILE_NAME = 'integration-single-prompt.md';
 
 function usage() {
