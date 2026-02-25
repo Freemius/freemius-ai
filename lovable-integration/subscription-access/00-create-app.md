@@ -1,6 +1,6 @@
 Create a minimal application with the following requirements:
 
-App name must be **SmirkIt**.
+App name must be **AsciiMeme**.
 
 ## Authentication
 
@@ -11,39 +11,41 @@ App name must be **SmirkIt**.
 
 ## Dashboard Page
 
-- After login, show a Dashboard with:
-    - A welcoming header: "Welcome back, {user.name}"
-    - A section in the Navigation bar showing "Account Status: Free" (this will
-      be updated later to reflect subscription status)
-- A simple "One-Liner Generator" panel containing:
-    - One textbox for user input
-    - One button labeled "Smirk It"
-    - One result area to display the generated smirk
+After login, show a Dashboard with:
 
-## One-Liner Generator Feature
+- A welcoming header: "Welcome back, {user.name}"
+- A section in the Navigation bar showing "Account Status: Free" (this will be
+  updated later to reflect subscription status)
+- A simple panel containing:
+    - One textbox for user input (e.g., "Type a topic (e.g., Monday mornings)")
+    - One button labeled "Meme It"
+    - One result area to display the generated ASCII art meme (inside a code
+      block with monospace font and a copy button)
 
-- Use text-only terminology: call the generated output a "smirk".
-- Clicking "Smirk It" should call a **Supabase backend function** (Supabase Edge
+## Meme Generator Feature
+
+- Use text-only terminology: call the generated output a "meme".
+- Clicking "Meme It" should call a **Supabase backend function** (Supabase Edge
   Function).
-- Create and invoke a Supabase function named `generate-caption`.
+- Create and invoke a Supabase function named `generate-meme`.
 - Request payload: `{ "prompt": "user input text" }`
 - The Supabase function should:
     - Verify the user is authenticated (return 401 if not).
     - Validate that `prompt` is a non-empty string (return 400 if invalid).
-    - Generate a funny short one-line caption based on the input (simple mock
+    - Generate a funny ASCII meme text block based on the input (simple mock
       logic is acceptable for now).
     - Return success response:
-      `{ "success": true, "caption": "generated one-liner text" }`
+      `{ "success": true, "meme": "generated ASCII meme text block" }`
 - On the frontend:
     - Disable button while loading and show "Generating..."
-    - Show the returned caption in the result area
+    - Show the returned meme text in the result area
     - Show friendly error messages for failure states
 
 ## UI/UX Considerations
 
 - Use a clean, modern design with a consistent color scheme
 - Add a simple navigation header with:
-    - App logo/name (SmirkIt)
+    - App logo/name (AsciiMeme)
     - User profile menu (with logout option)
 - Make the "Account Status" section visually distinct (will be used later for
   subscription info)

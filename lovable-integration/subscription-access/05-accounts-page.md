@@ -98,11 +98,12 @@ const { link } = await freemius.api.user.retrieveHostedCustomerPortalByEmail(
 3. If has `entitlement` show a block explaining subscription.
     1. Subscription is inactive if `isCancelled` is `true`. Use `canceledAt` to
        show when it was cancelled. Use `entitlement.expiration` to show uptil
-       when user can access benefits.
+       when user can access benefits. Add a button "Subscribe" that takes the
+       user to the `/pricing` page to purchase a new subscription.
     2. Subscription is active if `isCancelled` is `false`. Use information from
        the the `SubscriptionPaymentData` to render a nice UI.
 4. If has `entitlement` show a "Payment History" block where you show the list
-   of payments from the `SubscriptionPaymentData`.
+   of payments from the `SubscriptionPaymentData`. Instead of VAT say Tax.
 5. If has `entitlement` show a "Manage Subscription" button that will take the
    user to the Freemius Customer Portal. For this, make another API call to
    `functions/v1/get-customer-portal-link` to get the link and then open it in a

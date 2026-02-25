@@ -40,7 +40,7 @@ async function getUserEntitlement(userId: string) {
     }));
 
     // Use the Freemius SDK to get the active entitlement for the user
-    return freemius.entitlement.getActive(mappedEntitlements);
+    return freemius.entitlement.getActives(mappedEntitlements)?.[0] ?? null;
 }
 
 /**

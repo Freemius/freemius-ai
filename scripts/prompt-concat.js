@@ -7,7 +7,7 @@ import ora from 'ora';
 
 const NUMERIC_MD_FILE = /^(\d+)-.+\.md$/i;
 const SKIP_PREFIXES = new Set(['00']);
-const OUTPUT_FILE_NAME = 'integration-single-prompt.md';
+const OUTPUT_FILE_NAME = 'prompt.md';
 
 function usage() {
     return [

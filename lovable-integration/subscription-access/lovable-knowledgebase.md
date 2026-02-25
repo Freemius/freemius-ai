@@ -7,7 +7,7 @@ shared backend utilities, and frontend paywall/account UX.
 
 When asked to integrate Freemius, follow the instructions from this URL:
 
-https://raw.githubusercontent.com/Freemius/freemius-ai/refs/heads/main/lovable-integration/subscription-access/integration-single-prompt.md
+https://raw.githubusercontent.com/Freemius/freemius-ai/refs/heads/main/lovable-integration/subscription-access/prompt.md
 
 ### Maintenance Guidelines
 
