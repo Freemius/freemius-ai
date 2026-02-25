@@ -67,9 +67,16 @@ URL that you need to set up in the Freemius Developer Dashboard.
 
 ## Single Shot Integration
 
-In many cases, if you copy-paste or upload the
-[integration](./integration-single-prompt.md) file into Lovable and run it, it
-should be able to implement the entire integration in one go.
+Just copy-paste the content of the
+[lovable-knowledgebase](./lovable-knowledgebase.md) into your Lovable project
+Settings --> Knowledgebase and then ask the AI
+
+> Implement the Freemius integration based on the knowledgebase content.
+
+This should work for majority of the cases. If you want more control over the
+implementation or if the single shot integration doesn't work, you can follow
+the step-by-step instructions in the following markdown files. Each file
+corresponds to a specific part of the integration process.
 
 ## Step by Step Integration
 
@@ -102,7 +109,7 @@ process:
    production readiness checklist including environment configuration, URL
    updates, and comprehensive testing.
 
-## Usage Instructions
+### Usage Instructions
 
 Each markdown file contains detailed prompts designed for AI assistants (like
 GitHub Copilot or Lovable) to implement the integration step by step. You can:
