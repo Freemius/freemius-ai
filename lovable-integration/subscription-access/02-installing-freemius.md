@@ -27,8 +27,20 @@ async function getUserEntitlement(userId: string) {
     // Somehow read from the `user_fs_entitlement` table where the userId matches.
     const entitlements = await someDbCall();
 
+    // We need to map the DB records to camelCase format expected by the Freemius SDK.
+    const mappedEntitlements = entitlements.map((entitlement) => ({
+        fsLicenseId: entitlement.fs_license_id,
+        fsPlanId: entitlement.fs_plan_id,
+        fsPricingId: entitlement.fs_pricing_id,
+        fsUserId: entitlement.fs_user_id,
+        type: entitlement.type,
+        expiration: entitlement.expiration,
+        isCanceled: entitlement.is_canceled,
+        createdAt: entitlement.created_at,
+    }));
+
     // Use the Freemius SDK to get the active entitlement for the user
-    return freemius.entitlement.getActive(entitlements);
+    return freemius.entitlement.getActive(mappedEntitlements);
 }
 
 /**
@@ -45,15 +57,17 @@ async function processPurchase(licenseId: string) {
 
     const fsLicenseId = purchase.licenseId;
     // Now depending whether a record exists in the `user_fs_entitlement` table based on the unique key `fsLicenseId` either insert a new record or update the existing one with the new information from the purchase.
-    // The entitlementData should match the DB columns.
-    // - fsLicenseId: string;
-    // - fsPlanId: string;
-    // - fsPricingId: string;
-    // - fsUserId: string;
-    // - type: 'subscription' | 'lifetime';
-    // - expiration: Date | null;
-    // - createdAt: Date;
-    // - isCanceled: boolean;
+    const entitlementDataForDB = {
+        user_id: entitlementData.userId,
+        fs_license_id: entitlementData.fsLicenseId,
+        fs_plan_id: entitlementData.fsPlanId,
+        fs_pricing_id: entitlementData.fsPricingId,
+        fs_user_id: entitlementData.fsUserId,
+        type: entitlementData.type,
+        expiration: entitlementData.expiration,
+        is_canceled: entitlementData.isCanceled,
+        created_at: entitlementData.createdAt,
+    };
 
     // The record does not include `id` so generate for the upsert.
     // Use the DATABASE upsert functionality to keep the operation atomic
@@ -61,7 +75,7 @@ async function processPurchase(licenseId: string) {
     const { error } = await db
         .from('user_fs_entitlement')
         .upsert(
-            { id: newId, ...entitlementData },
+            { id: newId, ...entitlementDataForDB },
             { onConflict: 'fsLicenseId' }
         );
 }
@@ -156,3 +170,15 @@ location that can be imported in our API routes.
    upsert functionality provided by your database to achieve this. The unique
    constraint should be `fsLicenseId`, the database is already created in that
    way.
+
+## Data Mapping
+
+- The Freemius SDK expects **camelCase** properties (e.g. `fsLicenseId`,
+  `isCanceled`, `fsUserId`).
+- When reading entitlement rows from the database and passing them to any
+  Freemius SDK method (e.g. `freemius.entitlement.getActive()`), always map or
+  convert the column names from snake_case to camelCase to match the format
+  expected by the SDK.
+- Similarly, when writing SDK output back to the database (e.g.
+  `purchase.toEntitlementRecord()`), make sure to convert the camelCase
+  properties back to snake_case to match the database column names.

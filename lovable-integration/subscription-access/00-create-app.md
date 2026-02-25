@@ -1,5 +1,7 @@
 Create a minimal application with the following requirements:
 
+App name must be **SmirkIt**.
+
 ## Authentication
 
 - Implement login/registration using Lovable's built-in auth system
@@ -13,24 +15,38 @@ Create a minimal application with the following requirements:
     - A welcoming header: "Welcome back, {user.name}"
     - A section in the Navigation bar showing "Account Status: Free" (this will
       be updated later to reflect subscription status)
-    - A "Premium Action" button (nice, prominent design)
+- A simple "One-Liner Generator" panel containing:
+    - One textbox for user input
+    - One button labeled "Smirk It"
+    - One result area to display the generated smirk
 
-## Premium Action Feature
+## One-Liner Generator Feature
 
-- Clicking the "Premium Action" button triggers a server API call to
-  `/api/premium-action`
-- The API endpoint should:
-    - Verify the user is authenticated (return 401 if not)
+- Use text-only terminology: call the generated output a "smirk".
+- Clicking "Smirk It" should call a **Supabase backend function** (Supabase Edge
+  Function).
+- Create and invoke a Supabase function named `generate-caption`.
+- Request payload: `{ "prompt": "user input text" }`
+- The Supabase function should:
+    - Verify the user is authenticated (return 401 if not).
+    - Validate that `prompt` is a non-empty string (return 400 if invalid).
+    - Generate a funny short one-line caption based on the input (simple mock
+      logic is acceptable for now).
     - Return success response:
-      `{ success: true, message: "Premium action completed!" }`
-- Display the result message to the user in the UI (success state)
+      `{ "success": true, "caption": "generated one-liner text" }`
+- On the frontend:
+    - Disable button while loading and show "Generating..."
+    - Show the returned caption in the result area
+    - Show friendly error messages for failure states
 
 ## UI/UX Considerations
 
 - Use a clean, modern design with a consistent color scheme
 - Add a simple navigation header with:
-    - App logo/name
+    - App logo/name (SmirkIt)
     - User profile menu (with logout option)
 - Make the "Account Status" section visually distinct (will be used later for
   subscription info)
+- Make the generator panel visually prominent and easy to use
+- Add a helpful textbox placeholder, e.g. "Type a topic (e.g., Monday mornings)"
 - Keep the overall layout professional but minimal

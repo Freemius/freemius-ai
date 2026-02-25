@@ -75,3 +75,22 @@ All backend server action that must be behind a paywall will check the
 has an active entitlement before allowing access to the feature. If the user
 does not have an active entitlement, the API route should return an appropriate
 error message and status code.
+
+## Auth & Protected Routes Checklist
+
+When implementing authentication with protected routes:
+
+1. **useAuth hook MUST include a fallback timeout** — if `onAuthStateChange`
+   doesn't fire within 2 seconds, force `loading = false` to prevent infinite
+   spinners. Use a ref to track initialization.
+
+2. **Auth page MUST redirect authenticated users** — add a `useEffect` in the
+   Auth/Login page that checks `if (!authLoading && user)` and navigates to `/`
+   (or the intended post-login route). Without this, logged-in users see the
+   login form or a blank page.
+
+3. **Always test the full auth flow after integration:**
+    - Fresh page load while logged in (should show dashboard, not spinner)
+    - Login → redirect to dashboard
+    - Logout → redirect to auth page
+    - Direct URL access to protected route while logged out

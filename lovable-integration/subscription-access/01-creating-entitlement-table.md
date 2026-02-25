@@ -4,17 +4,17 @@ We need to create a table called `user_fs_entitlement` with the following
 columns:
 
 - id - The primary key.
-- userId - A foreign key referencing the user table. Value must match with the
+- user_id - A foreign key referencing the user table. Value must match with the
   ID of the user in the lovable auth system (text/string).
-- fsLicenseId - A unique identifier for the Freemius license (text/string).
-- fsPlanId - The Freemius plan ID (text/string).
-- fsPricingId - The Freemius pricing ID (text/string).
-- fsUserId - The Freemius user ID (text/string).
+- fs_license_id - A unique identifier for the Freemius license (text/string).
+- fs_plan_id - The Freemius plan ID (text/string).
+- fs_pricing_id - The Freemius pricing ID (text/string).
+- fs_user_id - The Freemius user ID (text/string).
 - type - The entitlement type (e.g., subscription, lifetime, etc.). It could be
   an enum with value `subscription` or `lifetime`.
 - expiration - The license expiration timestamp (nullable).
-- isCanceled - A boolean flag indicating if the license is canceled.
-- createdAt - Timestamp when the record was created.
+- is_canceled - A boolean flag indicating if the license is canceled.
+- created_at - Timestamp when the record was created.
 
 Here is a SQL equivalent, please adapt it for the lovable platform (supabase)
 
@@ -25,16 +25,16 @@ CREATE TYPE fs_entitlement_type AS ENUM ('subscription', 'lifetime');
 -- Then create the table
 CREATE TABLE user_fs_entitlement (
     id            TEXT PRIMARY KEY,
-    "userId"      TEXT NOT NULL,
-    "fsLicenseId" TEXT NOT NULL UNIQUE,
-    "fsPlanId"    TEXT NOT NULL,
-    "fsPricingId" TEXT NOT NULL,
-    "fsUserId"    TEXT NOT NULL,
+    user_id       TEXT NOT NULL,
+    fs_license_id TEXT NOT NULL UNIQUE,
+    fs_plan_id    TEXT NOT NULL,
+    fs_pricing_id TEXT NOT NULL,
+    fs_user_id    TEXT NOT NULL,
     type          fs_entitlement_type NOT NULL,
     expiration    TIMESTAMP(3) WITHOUT TIME ZONE,
-    "isCanceled"  BOOLEAN NOT NULL,
-    "createdAt"   TIMESTAMP(3) WITHOUT TIME ZONE NOT NULL,
-    CONSTRAINT    fk_user FOREIGN KEY ("userId") REFERENCES "User"(id) ON DELETE CASCADE
+    is_canceled   BOOLEAN NOT NULL,
+    created_at    TIMESTAMP(3) WITHOUT TIME ZONE NOT NULL,
+    CONSTRAINT    fk_user FOREIGN KEY (user_id) REFERENCES "User"(id) ON DELETE CASCADE
 );
 
 -- Index on type for faster filtering
