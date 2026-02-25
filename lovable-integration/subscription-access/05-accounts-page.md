@@ -103,7 +103,10 @@ const { link } = await freemius.api.user.retrieveHostedCustomerPortalByEmail(
     2. Subscription is active if `isCancelled` is `false`. Use information from
        the the `SubscriptionPaymentData` to render a nice UI.
 4. If has `entitlement` show a "Payment History" block where you show the list
-   of payments from the `SubscriptionPaymentData`. Instead of VAT say Tax.
+   of payments from the `SubscriptionPaymentData`. Show the amount first with
+   just currency symbol and then date with a nice icon and formatting. If `type`
+   is `refund` show a refund icon and make the amount red to indicate it was a
+   refund with `-` sign before the amount.
 5. If has `entitlement` show a "Manage Subscription" button that will take the
    user to the Freemius Customer Portal. For this, make another API call to
    `functions/v1/get-customer-portal-link` to get the link and then open it in a
