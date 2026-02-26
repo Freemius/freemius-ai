@@ -31,8 +31,20 @@ the front-end to show the pricing information and also to get the checkout URL
 for each plan.
 
 ```typescript
-import { getPricingData, PricingData } from '../_shared/freemius'; // Correct the path
+import {
+  getPricingData,
+  PricingData,
+  getUserEntitlement,
+} from '../_shared/freemius'; // Correct the path
 // Now create the API route handler that will call the above function and return the pricing information to the frontend. Make sure to handle authentication and only allow access to logged in users. Pass the user information to the `getPricingData` function to generate the checkout URL for each plan based on the user information if needed.
+
+const localUserId = await getUserIdFromAuth(); // Implement this function to get the user ID from the authentication context
+const entitlement = await getUserEntitlement(localUserId);
+
+const pricingData = await getPricingData(
+  { email: '...', firstName: '...', lastName: '...' }, // Pass the actual user information here
+  entitlement
+);
 
 // The return data needs to be of the shape {pricingData: PricingData[]}
 ```
@@ -65,11 +77,13 @@ needs to support POST API methods or anything that comes with
    button for each plan that will link to the checkout URL for that plan.
    - Create a simple and working UI for this. Use the data structure of
      `PricingData` that we have in the shared module to design the UI and show
-     the information, show plan title, annual/monthly price.
-   - If the user already has an active subscription, show a message saying "You
-     already have an active subscription" and hide the pricing information and
-     the subscribe buttons. Add a link to a `/account` page that we will create
-     in the next step.
+     the information,
+   - show plan title, annual/monthly price and annual over monthly discount if
+     present.
+   - Use the `canCheckout` to either enable or disable the button, `buttonText`
+     for the button label.
+   - Clicking the button will take to the `checkoutUrl` page.
+   - Render the features of each plan in a nice UI.
 
 ## Protecting Server Actions
 

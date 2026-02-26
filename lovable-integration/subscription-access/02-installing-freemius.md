@@ -8,7 +8,7 @@ Create a file called `supabase/functions/_shared/freemius.ts` for
 backend/supabase and put the following code in it:
 
 ```ts
-import { Freemius, PurchaseEntitlementData } from 'npm:@freemius/sdk';
+import { Freemius, PurchaseEntitlementData, Checkout } from 'npm:@freemius/sdk';
 
 export const freemius = new Freemius({
   productId: Deno.env.get('FREEMIUS_PRODUCT_ID')!,
@@ -88,8 +88,10 @@ type PricingData = {
   annualDiscount: number | null;
   planId: string;
   title: string;
+  canCheckout: boolean;
   checkoutUrl: string;
   isCurrentPlan: boolean;
+  buttonText: string;
   features: { title: string; value: string }[];
 };
 
@@ -110,9 +112,6 @@ async function createFreemiusCheckout(
   return checkout;
 }
 
-/**
- * Get data for rendering a pricing table.
- */
 async function getPricingData(
   user: { email: string; firstName?: string; lastName?: string },
   entitlement: Pick<
@@ -127,8 +126,19 @@ async function getPricingData(
       )
     : null;
 
+  const subscription = entitlement
+    ? await freemius.api.license.retrieveSubscription(entitlement.fsLicenseId)
+    : null;
+  const hasActiveSubscription = subscription?.canceled_at == null;
+  const currentPlanIndex = entitlement
+    ? (productPricing?.plans?.findIndex(
+        (plan) => plan.id === entitlement.fsPlanId
+      ) ?? -1)
+    : -1;
+
   const data: PricingData[] = [];
 
+  let index = 0;
   for (const plan of productPricing?.plans ?? []) {
     if (plan.is_hidden) {
       continue;
@@ -137,7 +147,7 @@ async function getPricingData(
     const checkout = await createFreemiusCheckout(user, plan.id!);
     const isCurrentPlan = entitlement?.fsPlanId == plan.id;
 
-    if (upgradeAuth && !isCurrentPlan) {
+    if (upgradeAuth) {
       checkout.setLicenseUpgradeByAuth({
         authorization: upgradeAuth,
         licenseId: entitlement!.fsLicenseId,
@@ -158,23 +168,59 @@ async function getPricingData(
       }
     }
 
+    const canCheckout = !hasActiveSubscription || !isCurrentPlan;
+
+    const isLowerPlan = currentPlanIndex !== -1 && index < currentPlanIndex;
+
+    const buttonText =
+      !upgradeAuth || !hasActiveSubscription
+        ? 'Subscribe'
+        : isCurrentPlan
+          ? 'Your Plan'
+          : isLowerPlan
+            ? 'Downgrade'
+            : 'Upgrade';
+
     data.push({
       isCurrentPlan,
+      canCheckout,
+      buttonText,
       annual: plan.pricing?.[0]?.annual_price ?? null,
       monthly: plan.pricing?.[0]?.monthly_price ?? null,
       annualDiscount: annualOverMonthlyDiscount,
       planId: plan.id!,
       title: plan.title!,
-      checkoutUrl: checkout.getLink(),
+      checkoutUrl: canCheckout ? checkout.getLink() : '',
       features:
         plan.features?.map((feature) => ({
           title: feature.title!,
           value: feature.value!,
         })) ?? [],
     });
+
+    index++;
   }
 
   return data;
+}
+
+/**
+ * Function to cancel subscription
+ */
+async function cancelSubscription(
+  entitlement: Pick<PurchaseEntitlementData, 'fsLicenseId'>
+): Promise<boolean> {
+  const subscription = await freemius.api.license.retrieveSubscription(
+    entitlement.fsLicenseId
+  );
+
+  if (!subscription || subscription.canceled_at != null) {
+    return false;
+  }
+
+  await freemius.api.subscription.cancel(subscription.id!);
+
+  return true;
 }
 
 export const LIVE_SUPABASE_URL =

@@ -41,6 +41,23 @@ After login, show a Dashboard with:
   - Show the returned meme text in the result area
   - Show friendly error messages for failure states
 
+A good example of ouput meme text block could be:
+
+```
+┌───────────────┐
+│  USER INPUT   │
+└───────────────┘
+
+        \   ^__^
+         \  (oo)\_______
+            (__)\       )\/\
+                ||----w |
+                ||     ||
+
+  "When you think about user input
+   and realize... it's complicated"
+```
+
 ## UI/UX Considerations
 
 - Use a clean, modern design with a consistent color scheme
@@ -52,3 +69,8 @@ After login, show a Dashboard with:
 - Make the generator panel visually prominent and easy to use
 - Add a helpful textbox placeholder, e.g. "Type a topic (e.g., Monday mornings)"
 - Keep the overall layout professional but minimal
+- Auth Hook Rule: Never use async callbacks inside onAuthStateChange. Profile
+  fetches and other DB queries triggered by auth events must be fire-and-forget
+  (.then()) so they never block the loading state from resolving. Always ensure
+  setLoading(false) is called synchronously within the callback, not after an
+  await.
