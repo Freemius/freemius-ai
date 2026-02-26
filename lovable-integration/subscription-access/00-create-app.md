@@ -17,10 +17,10 @@ After login, show a Dashboard with:
 - A section in the Navigation bar showing "Account Status: Free" (this will be
   updated later to reflect subscription status)
 - A simple panel containing:
-    - One textbox for user input (e.g., "Type a topic (e.g., Monday mornings)")
-    - One button labeled "Meme It"
-    - One result area to display the generated ASCII art meme (inside a code
-      block with monospace font and a copy button)
+  - One textbox for user input (e.g., "Type a topic (e.g., Monday mornings)")
+  - One button labeled "Meme It"
+  - One result area to display the generated ASCII art meme (inside a code block
+    with monospace font and a copy button)
 
 ## Meme Generator Feature
 
@@ -30,23 +30,23 @@ After login, show a Dashboard with:
 - Create and invoke a Supabase function named `generate-meme`.
 - Request payload: `{ "prompt": "user input text" }`
 - The Supabase function should:
-    - Verify the user is authenticated (return 401 if not).
-    - Validate that `prompt` is a non-empty string (return 400 if invalid).
-    - Generate a funny ASCII meme text block based on the input (simple mock
-      logic is acceptable for now).
-    - Return success response:
-      `{ "success": true, "meme": "generated ASCII meme text block" }`
+  - Verify the user is authenticated (return 401 if not).
+  - Validate that `prompt` is a non-empty string (return 400 if invalid).
+  - Generate a funny ASCII meme text block based on the input (simple mock logic
+    is acceptable for now).
+  - Return success response:
+    `{ "success": true, "meme": "generated ASCII meme text block" }`
 - On the frontend:
-    - Disable button while loading and show "Generating..."
-    - Show the returned meme text in the result area
-    - Show friendly error messages for failure states
+  - Disable button while loading and show "Generating..."
+  - Show the returned meme text in the result area
+  - Show friendly error messages for failure states
 
 ## UI/UX Considerations
 
 - Use a clean, modern design with a consistent color scheme
 - Add a simple navigation header with:
-    - App logo/name (AsciiMeme)
-    - User profile menu (with logout option)
+  - App logo/name (AsciiMeme)
+  - User profile menu (with logout option)
 - Make the "Account Status" section visually distinct (will be used later for
   subscription info)
 - Make the generator panel visually prominent and easy to use

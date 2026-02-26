@@ -1,3 +1,6 @@
+Integrate Freemius end-to-end in this Lovable app using Supabase functions,
+shared backend utilities, and frontend paywall/account UX.
+
 # Step 1: Create Entitlement Table
 
 We need to create a table called `user_fs_entitlement` with the following
@@ -61,10 +64,10 @@ backend/supabase and put the following code in it:
 import { Freemius } from 'npm:@freemius/sdk';
 
 export const freemius = new Freemius({
-    productId: Deno.env.get('FREEMIUS_PRODUCT_ID')!,
-    apiKey: Deno.env.get('FREEMIUS_API_KEY')!,
-    secretKey: Deno.env.get('FREEMIUS_SECRET_KEY')!,
-    publicKey: Deno.env.get('FREEMIUS_PUBLIC_KEY')!,
+  productId: Deno.env.get('FREEMIUS_PRODUCT_ID')!,
+  apiKey: Deno.env.get('FREEMIUS_API_KEY')!,
+  secretKey: Deno.env.get('FREEMIUS_SECRET_KEY')!,
+  publicKey: Deno.env.get('FREEMIUS_PUBLIC_KEY')!,
 });
 
 const SANDBOX = false; // Change this to true if you want to test in sandbox mode
@@ -74,120 +77,121 @@ const SANDBOX = false; // Change this to true if you want to test in sandbox mod
  * This function will be used in the API route to get the user's entitlement information.
  */
 async function getUserEntitlement(userId: string) {
-    // Somehow read from the `user_fs_entitlement` table where the userId matches.
-    const entitlements = await someDbCall();
+  // Somehow read from the `user_fs_entitlement` table where the userId matches.
+  const entitlements = await someDbCall();
 
-    // We need to map the DB records to camelCase format expected by the Freemius SDK.
-    const mappedEntitlements = entitlements.map((entitlement) => ({
-        fsLicenseId: entitlement.fs_license_id,
-        fsPlanId: entitlement.fs_plan_id,
-        fsPricingId: entitlement.fs_pricing_id,
-        fsUserId: entitlement.fs_user_id,
-        type: entitlement.type,
-        expiration: entitlement.expiration,
-        isCanceled: entitlement.is_canceled,
-        createdAt: entitlement.created_at,
-    }));
+  // We need to map the DB records to camelCase format expected by the Freemius SDK.
+  const mappedEntitlements = entitlements.map((entitlement) => ({
+    fsLicenseId: entitlement.fs_license_id,
+    fsPlanId: entitlement.fs_plan_id,
+    fsPricingId: entitlement.fs_pricing_id,
+    fsUserId: entitlement.fs_user_id,
+    type: entitlement.type,
+    expiration: entitlement.expiration,
+    isCanceled: entitlement.is_canceled,
+    createdAt: entitlement.created_at,
+  }));
 
-    // Use the Freemius SDK to get the active entitlement for the user
-    return freemius.entitlement.getActives(mappedEntitlements)?.[0] ?? null;
+  // Use the Freemius SDK to get the active entitlement for the user
+  const actives = freemius.entitlement.getActives(mappedEntitlements) ?? [];
+  return actives?.[actives.length - 1] ?? null;
 }
 
 /**
  * Create a Function to synchronize the entitlement information to the database.
  */
 async function processPurchase(licenseId: string) {
-    const purchaseInfo = await freemius.purchase.retrievePurchase(licenseId);
-    const localUser = await getUserFromDb(purchaseInfo.email);
+  const purchaseInfo = await freemius.purchase.retrievePurchase(licenseId);
+  const localUser = await getUserFromDb(purchaseInfo.email);
 
-    // Convert the purchase information to the entitlement record format for our database.
-    const entitlementData = purchase.toEntitlementRecord({
-        userId: localUser.id,
-    });
+  // Convert the purchase information to the entitlement record format for our database.
+  const entitlementData = purchase.toEntitlementRecord({
+    userId: localUser.id,
+  });
 
-    const fsLicenseId = purchase.licenseId;
-    // Now depending whether a record exists in the `user_fs_entitlement` table based on the unique key `fsLicenseId` either insert a new record or update the existing one with the new information from the purchase.
-    const entitlementDataForDB = {
-        user_id: entitlementData.userId,
-        fs_license_id: entitlementData.fsLicenseId,
-        fs_plan_id: entitlementData.fsPlanId,
-        fs_pricing_id: entitlementData.fsPricingId,
-        fs_user_id: entitlementData.fsUserId,
-        type: entitlementData.type,
-        expiration: entitlementData.expiration,
-        is_canceled: entitlementData.isCanceled,
-        created_at: entitlementData.createdAt,
-    };
+  const fsLicenseId = purchase.licenseId;
+  // Now depending whether a record exists in the `user_fs_entitlement` table based on the unique key `fsLicenseId` either insert a new record or update the existing one with the new information from the purchase.
+  const entitlementDataForDB = {
+    user_id: entitlementData.userId,
+    fs_license_id: entitlementData.fsLicenseId,
+    fs_plan_id: entitlementData.fsPlanId,
+    fs_pricing_id: entitlementData.fsPricingId,
+    fs_user_id: entitlementData.fsUserId,
+    type: entitlementData.type,
+    expiration: entitlementData.expiration,
+    is_canceled: entitlementData.isCanceled,
+    created_at: entitlementData.createdAt,
+  };
 
-    // The record does not include `id` so generate for the upsert.
-    // Use the DATABASE upsert functionality to keep the operation atomic
-    const newId = generateUniqueId();
-    const { error } = await db
-        .from('user_fs_entitlement')
-        .upsert(
-            { id: newId, ...entitlementDataForDB },
-            { onConflict: 'fsLicenseId' }
-        );
+  // The record does not include `id` so generate for the upsert.
+  // Use the DATABASE upsert functionality to keep the operation atomic
+  const newId = generateUniqueId();
+  const { error } = await db
+    .from('user_fs_entitlement')
+    .upsert(
+      { id: newId, ...entitlementDataForDB },
+      { onConflict: 'fsLicenseId' }
+    );
 }
 type PricingData = {
-    annual: number | null;
-    monthly: number | null;
-    planId: string;
-    title: string;
-    checkoutUrl: string;
-    features: { title: string; value: string }[];
+  annual: number | null;
+  monthly: number | null;
+  planId: string;
+  title: string;
+  checkoutUrl: string;
+  features: { title: string; value: string }[];
 };
 
 /**
  * Create a Checkout session for the user.
  */
 async function createFreemiusCheckout(
-    user: { email: string; firstName?: string; lastName?: string },
-    planId?: string
+  user: { email: string; firstName?: string; lastName?: string },
+  planId?: string
 ): Promise<string> {
-    // @ts-expect-error - The planId can be undefined and depending on some TS config it can cause error, but in practice this is fine.
-    const checkout = await freemius.checkout.create({
-        user,
-        planId: planId,
-        isSandbox: SANDBOX,
-    });
+  // @ts-expect-error - The planId can be undefined and depending on some TS config it can cause error, but in practice this is fine.
+  const checkout = await freemius.checkout.create({
+    user,
+    planId: planId,
+    isSandbox: SANDBOX,
+  });
 
-    return checkout.getLink();
+  return checkout.getLink();
 }
 
 async function getPricingData(user: {
-    email: string;
-    firstName?: string;
-    lastName?: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
 }): Promise<PricingData[]> {
-    const productPricing = await freemius.api.product.retrievePricingData();
+  const productPricing = await freemius.api.product.retrievePricingData();
 
-    const data: PricingData[] = [];
+  const data: PricingData[] = [];
 
-    for (const plan of productPricing?.plans ?? []) {
-        if (plan.is_hidden) {
-            continue;
-        }
-
-        data.push({
-            annual: plan.pricing?.[0]?.annual_price ?? null,
-            monthly: plan.pricing?.[0]?.monthly_price ?? null,
-            planId: plan.id!,
-            title: plan.title!,
-            checkoutUrl: await createFreemiusCheckout(user, plan.id!),
-            features:
-                plan.features?.map((feature) => ({
-                    title: feature.title!,
-                    value: feature.value!,
-                })) ?? [],
-        });
+  for (const plan of productPricing?.plans ?? []) {
+    if (plan.is_hidden) {
+      continue;
     }
 
-    return data;
+    data.push({
+      annual: plan.pricing?.[0]?.annual_price ?? null,
+      monthly: plan.pricing?.[0]?.monthly_price ?? null,
+      planId: plan.id!,
+      title: plan.title!,
+      checkoutUrl: await createFreemiusCheckout(user, plan.id!),
+      features:
+        plan.features?.map((feature) => ({
+          title: feature.title!,
+          value: feature.value!,
+        })) ?? [],
+    });
+  }
+
+  return data;
 }
 
 export const LIVE_SUPABASE_URL =
-    'https://xyz.supabase.co/functions/v1/process-checkout'; // Change this to your actual URL
+  'https://xyz.supabase.co/functions/v1/process-checkout'; // Change this to your actual URL
 
 export const LIVE_FRONTEND_URL = 'https://your-frontend-url.com'; // Change this to your actual frontend URL
 ```
@@ -246,10 +250,10 @@ table.
 
 ```typescript
 import {
-    freemius,
-    processPurchase,
-    LIVE_SUPABASE_URL,
-    LIVE_FRONTEND_URL,
+  freemius,
+  processPurchase,
+  LIVE_SUPABASE_URL,
+  LIVE_FRONTEND_URL,
 } from '../_shared/freemius'; // Correct the path
 
 // Process the GET request on this route.
@@ -267,21 +271,21 @@ const modifiedCurrentUrlString = modifiedCurrentUrl.toString();
 
 // Validate the redirect (SDK does signature validation) and get the information
 const redirectInfo = await freemius.checkout.processRedirect(
-    modifiedCurrentUrlString,
-    LIVE_SUPABASE_URL
+  modifiedCurrentUrlString,
+  LIVE_SUPABASE_URL
 );
 
 // Process the purchase from redirectInfo if possible
 if (redirectInfo?.license_id) {
-    processPurchase(redirectInfo.license_id);
+  processPurchase(redirectInfo.license_id);
 }
 
 // Once done redirect to a specific front-end page with a success message or error message based on the result of the process. For this you can use a redirection header with the URL of the front-end page and pass query parameters to indicate success or failure and the message to show.
 return new Response(null, {
-    status: 302,
-    headers: {
-        Location: `${LIVE_FRONTEND_URL}/checkout-result?success=true`, // Change this to your actual front-end URL and page
-    },
+  status: 302,
+  headers: {
+    Location: `${LIVE_FRONTEND_URL}/checkout-result?success=true`, // Change this to your actual front-end URL and page
+  },
 });
 // Adapt the code to lovable platform's way of handling redirections as needed.
 ```
@@ -353,31 +357,30 @@ needs to support POST API methods or anything that comes with
 1. The front-end when loading will make API call to the
    `functions/v1/get-entitlements` using `supabase.functions.invoke`.
 2. If there is an active entitlement, then the front-end will
-    1. Show a "Premium" badge in the navbar where currently it shows "Account
-       Status: Free"
-    2. Reveal all the UI from where the user can make use of the premium
-       features (for example the "Premium Action" button on the dashboard)
+   1. Show a "Premium" badge in the navbar where currently it shows "Account
+      Status: Free"
+   2. Reveal all the UI from where the user can make use of the premium features
+      (for example the "Premium Action" button on the dashboard)
 3. If there is no active entitlement, then the front-end will
-    1. Show a "Subscribe" button in the navbar where currently it shows "Account
-       Status: Free"
-    2. Disable all the UI from where the user can make use of the premium
-       features (for example the "Premium Action" button on the dashboard). It
-       can also hint that a subscription is required to access those features.
-       And also show the same "Subscribe" button next to the "Premium Action"
-       button in the dashboard to make it easier for the user to find how to
-       subscribe. Have it link to the same Checkout URL as the one in the
-       navbar.
-    3. Clicking the "Subscribe" button will take to a new page `/pricing`.
+   1. Show a "Subscribe" button in the navbar where currently it shows "Account
+      Status: Free"
+   2. Disable all the UI from where the user can make use of the premium
+      features (for example the "Premium Action" button on the dashboard). It
+      can also hint that a subscription is required to access those features.
+      And also show the same "Subscribe" button next to the "Premium Action"
+      button in the dashboard to make it easier for the user to find how to
+      subscribe. Have it link to the same Checkout URL as the one in the navbar.
+   3. Clicking the "Subscribe" button will take to a new page `/pricing`.
 4. The `/pricing` page will show the pricing information for the plans that we
    get from the `functions/v1/get-pricing-data` API route and also a "Subscribe"
    button for each plan that will link to the checkout URL for that plan.
-    - Create a simple and working UI for this. Use the data structure of
-      `PricingData` that we have in the shared module to design the UI and show
-      the information, show plan title, annual/monthly price.
-    - If the user already has an active subscription, show a message saying "You
-      already have an active subscription" and hide the pricing information and
-      the subscribe buttons. Add a link to a `/account` page that we will create
-      in the next step.
+   - Create a simple and working UI for this. Use the data structure of
+     `PricingData` that we have in the shared module to design the UI and show
+     the information, show plan title, annual/monthly price.
+   - If the user already has an active subscription, show a message saying "You
+     already have an active subscription" and hide the pricing information and
+     the subscribe buttons. Add a link to a `/account` page that we will create
+     in the next step.
 
 ## Protecting Server Actions
 
@@ -401,134 +404,12 @@ When implementing authentication with protected routes:
    login form or a blank page.
 
 3. **Always test the full auth flow after integration:**
-    - Fresh page load while logged in (should show dashboard, not spinner)
-    - Login → redirect to dashboard
-    - Logout → redirect to auth page
-    - Direct URL access to protected route while logged out
+   - Fresh page load while logged in (should show dashboard, not spinner)
+   - Login → redirect to dashboard
+   - Logout → redirect to auth page
+   - Direct URL access to protected route while logged out
 
-# Step 5: Create Accounts Page
-
-Create an accounts page where the user can see their subscription status,
-payments list and get a link to Freemius Customer Portal to manage their
-subscription.
-
-## Backend API Routes
-
-### New route under `supabase/functions/get-account/index.ts`:
-
-```typescript
-import { getUserEntitlement, freemius } from '../_shared/freemius'; // Correct the path
-
-type SubscriptionPaymentData = {
-    subscription: {
-        id: string;
-        cyclePricing: number;
-        frequency: 'annual' | 'monthly';
-        // In YYYY-MM-DD HH:mm:ss format
-        nextPayment: string;
-        isCancelled: boolean;
-        // In YYYY-MM-DD HH:mm:ss format or null
-        canceledAt: string | null;
-    } | null;
-    payments: {
-        id: string;
-        gross: number;
-        vat: number;
-        currency: string;
-        // In YYYY-MM-DD HH:mm:ss format
-        created: string;
-    }[];
-};
-
-async function getSubscriptionAndPayments(
-    entitlement: Pick<PurchaseEntitlementData, 'fsLicenseId' | 'fsUserId'>
-): Promise<SubscriptionPaymentData> {
-    const subscription = await freemius.api.license.retrieveSubscription(
-        entitlement.fsLicenseId
-    );
-    const payments = await freemius.api.user.retrievePayments(
-        entitlement.fsUserId
-    );
-
-    const data: SubscriptionPaymentData = {
-        subscription: subscription
-            ? {
-                  id: subscription.id!,
-                  cyclePricing: subscription.amount_per_cycle!,
-                  frequency:
-                      subscription.billing_cycle === 12 ? 'annual' : 'monthly',
-                  nextPayment: subscription.next_payment!,
-                  isCancelled: subscription.canceled_at !== null,
-                  canceledAt: subscription.canceled_at ?? null,
-              }
-            : null,
-        payments:
-            payments?.map((payment) => ({
-                id: payment.id!,
-                gross: payment.gross!,
-                vat: payment.vat!,
-                currency: payment.currency!,
-                created: payment.created!,
-            })) ?? [],
-    };
-
-    return data;
-}
-
-const userId = '...'; // Get the user ID from the session or authentication context
-const entitlement = await getUserEntitlement(userId);
-
-const subscriptionAndPayments = entitlement
-    ? await getSubscriptionAndPayments(entitlement)
-    : null;
-
-// The return needs to be of the shape { entitlement: Entitlement | null, subscriptionAndPayments: SubscriptionPaymentData | null }
-```
-
-### New route under `supabase/functions/get-customer-portal-link/index.ts`
-
-This will return the Freemius Customer Portal link for the logged in user:
-
-```typescript
-import { freemius } from '../_shared/freemius'; // Correct the path
-
-// Using the email address
-const { link } = await freemius.api.user.retrieveHostedCustomerPortalByEmail(
-    '...' // Email address of the logged in user, which you can get from the session
-);
-```
-
-## Front-end Implementation
-
-1. Create a new page `/accounts` in the front-end, make sure the link is visible
-   in the navigation menu.
-2. Make supabase function call to `functions/v1/get-account`
-3. If has `entitlement` show a block explaining subscription.
-    1. Subscription is inactive if `isCancelled` is `true`. Use `canceledAt` to
-       show when it was cancelled. Use `entitlement.expiration` to show uptil
-       when user can access benefits. Add a button "Subscribe" that takes the
-       user to the `/pricing` page to purchase a new subscription.
-    2. Subscription is active if `isCancelled` is `false`. Use information from
-       the the `SubscriptionPaymentData` to render a nice UI.
-4. If has `entitlement` show a "Payment History" block where you show the list
-   of payments from the `SubscriptionPaymentData`. Instead of VAT say Tax.
-5. If has `entitlement` show a "Manage Subscription" button that will take the
-   user to the Freemius Customer Portal. For this, make another API call to
-   `functions/v1/get-customer-portal-link` to get the link and then open it in a
-   new tab.
-    1. If the browser fails to open the tab (due to popup blockers), then show
-       the link to the user and ask them to open it manually.
-    2. The URL must be visible very prominently and clicking it should
-       immediately open the link in a new tab.
-    3. Do show a UI saying the link will expire in 5 mins. You can also add a
-       timer counting down to when the link will expire.
-    4. Hide the URL after 5 mins because it will expire and show the main button
-       again.
-6. If no `entitlement` show a message saying "You don't have an active
-   subscription" and show a "Subscribe" button that takes to the `/pricing`
-   page.
-
-# Step 6: Webhook Integration
+# Step 5: Webhook Integration
 
 Now we will setup webhook for Freemius to synchronize license and subscription
 changes to the `user_fs_entitlement` table in our database.
@@ -539,55 +420,55 @@ changes to the `user_fs_entitlement` table in our database.
 2. To process the webhook, we will use the Freemius SDK. (Documentation:
    https://freemius.com/help/documentation/saas-sdk/js-sdk/integration/#handling-license-updates-via-webhooks)
 
-    ```typescript
-    import { freemius, processPurchase } from '../_shared/freemius'; // Correct the path
-    import {
-        WebhookAuthenticationMethod,
-        WebhookEventType,
-    } from 'npm:@freemius/sdk';
+   ```typescript
+   import { freemius, processPurchase } from '../_shared/freemius'; // Correct the path
+   import {
+     WebhookAuthenticationMethod,
+     WebhookEventType,
+   } from 'npm:@freemius/sdk';
 
-    const listener = freemius.webhook.createListener({
-        authenticationMethod: WebhookAuthenticationMethod.Api,
-    });
+   const listener = freemius.webhook.createListener({
+     authenticationMethod: WebhookAuthenticationMethod.Api,
+   });
 
-    // Freemius events to listen to
-    const licenseEvents: WebhookEventType[] = [
-        'license.created',
-        'license.extended',
-        'license.shortened',
-        'license.updated',
-        'license.cancelled',
-        'license.expired',
-        'license.plan.changed',
-    ];
+   // Freemius events to listen to
+   const licenseEvents: WebhookEventType[] = [
+     'license.created',
+     'license.extended',
+     'license.shortened',
+     'license.updated',
+     'license.cancelled',
+     'license.expired',
+     'license.plan.changed',
+   ];
 
-    listener.on(licenseEvents, async ({ objects: { license } }) => {
-        if (license && license.id) {
-            await processPurchase(license.id);
-        }
-    });
+   listener.on(licenseEvents, async ({ objects: { license } }) => {
+     if (license && license.id) {
+       await processPurchase(license.id);
+     }
+   });
 
-    // Get the raw body from the request
-    const rawBody = await request.text();
+   // Get the raw body from the request
+   const rawBody = await request.text();
 
-    // Now process it with the Freemius SDK, but intentionally don't await it to make sure we pass a 2xx response to Freemius as soon as possible and avoid retries. We will handle the processing asynchronously and add detailed logs to make sure we can debug any issues that might come up in the process.
-    let result = listener
-        .process({
-            headers: req.headers,
-            rawBody: rawBody,
-        })
-        .catch((error) => {
-            console.error('Error processing Freemius webhook:', error);
-        });
+   // Now process it with the Freemius SDK, but intentionally don't await it to make sure we pass a 2xx response to Freemius as soon as possible and avoid retries. We will handle the processing asynchronously and add detailed logs to make sure we can debug any issues that might come up in the process.
+   let result = listener
+     .process({
+       headers: req.headers,
+       rawBody: rawBody,
+     })
+     .catch((error) => {
+       console.error('Error processing Freemius webhook:', error);
+     });
 
-    // Pass a 2xx response to Freemius.
-    ```
+   // Pass a 2xx response to Freemius.
+   ```
 
 3. Adjust the code to the platform specifics and add console logs for easier
    debugging.
 4. Share the URL for me to add it in the Freemius Developer Dashboard.
 
-# Step 7: Finalization
+# Step 6: Finalization
 
 Now that the Freemius Licensing integraiton is complete, please check the
 followings:
@@ -605,15 +486,15 @@ followings:
    `https://dashboard.freemius.com/#!/live/products/{PRODUCT_ID}/webhooks/listeners/`
    (replace {PRODUCT_ID} with the actual product ID) to add the webhook listener
    and provide the URL there. Ask me to listen for events
-    - license.cancelled
-    - license.created
-    - license.deleted
-    - license.expired
-    - license.extended
-    - license.plan.changed
-    - license.quota.changed
-    - license.shortened
-    - license.updated
+   - license.cancelled
+   - license.created
+   - license.deleted
+   - license.expired
+   - license.extended
+   - license.plan.changed
+   - license.quota.changed
+   - license.shortened
+   - license.updated
 6. When giving me the Checkout Redirection URL mention I need to go to
    `https://dashboard.freemius.com/#!/live/products/{PRODUCT_ID}/plans/`
    (replace {PRODUCT_ID} with the actual product ID) to configure the checkout

@@ -22,9 +22,9 @@ We welcome:
 2. Make your change with clear commit messages.
 3. Update documentation when behavior or usage changes.
 4. Submit a pull request with:
-    - What changed
-    - Why it changed
-    - Any relevant screenshots or logs (if applicable)
+   - What changed
+   - Why it changed
+   - Any relevant screenshots or logs (if applicable)
 
 ## Style expectations
 
@@ -41,14 +41,14 @@ To keep formatting consistent across contributions:
 
 ```json
 {
-    "[typescript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode",
-        "editor.formatOnSave": true
-    },
-    "[markdown]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode",
-        "editor.formatOnSave": true
-    }
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  }
 }
 ```
 

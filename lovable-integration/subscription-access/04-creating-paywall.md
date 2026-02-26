@@ -46,31 +46,30 @@ needs to support POST API methods or anything that comes with
 1. The front-end when loading will make API call to the
    `functions/v1/get-entitlements` using `supabase.functions.invoke`.
 2. If there is an active entitlement, then the front-end will
-    1. Show a "Premium" badge in the navbar where currently it shows "Account
-       Status: Free"
-    2. Reveal all the UI from where the user can make use of the premium
-       features (for example the "Premium Action" button on the dashboard)
+   1. Show a "Premium" badge in the navbar where currently it shows "Account
+      Status: Free"
+   2. Reveal all the UI from where the user can make use of the premium features
+      (for example the "Premium Action" button on the dashboard)
 3. If there is no active entitlement, then the front-end will
-    1. Show a "Subscribe" button in the navbar where currently it shows "Account
-       Status: Free"
-    2. Disable all the UI from where the user can make use of the premium
-       features (for example the "Premium Action" button on the dashboard). It
-       can also hint that a subscription is required to access those features.
-       And also show the same "Subscribe" button next to the "Premium Action"
-       button in the dashboard to make it easier for the user to find how to
-       subscribe. Have it link to the same Checkout URL as the one in the
-       navbar.
-    3. Clicking the "Subscribe" button will take to a new page `/pricing`.
+   1. Show a "Subscribe" button in the navbar where currently it shows "Account
+      Status: Free"
+   2. Disable all the UI from where the user can make use of the premium
+      features (for example the "Premium Action" button on the dashboard). It
+      can also hint that a subscription is required to access those features.
+      And also show the same "Subscribe" button next to the "Premium Action"
+      button in the dashboard to make it easier for the user to find how to
+      subscribe. Have it link to the same Checkout URL as the one in the navbar.
+   3. Clicking the "Subscribe" button will take to a new page `/pricing`.
 4. The `/pricing` page will show the pricing information for the plans that we
    get from the `functions/v1/get-pricing-data` API route and also a "Subscribe"
    button for each plan that will link to the checkout URL for that plan.
-    - Create a simple and working UI for this. Use the data structure of
-      `PricingData` that we have in the shared module to design the UI and show
-      the information, show plan title, annual/monthly price.
-    - If the user already has an active subscription, show a message saying "You
-      already have an active subscription" and hide the pricing information and
-      the subscribe buttons. Add a link to a `/account` page that we will create
-      in the next step.
+   - Create a simple and working UI for this. Use the data structure of
+     `PricingData` that we have in the shared module to design the UI and show
+     the information, show plan title, annual/monthly price.
+   - If the user already has an active subscription, show a message saying "You
+     already have an active subscription" and hide the pricing information and
+     the subscribe buttons. Add a link to a `/account` page that we will create
+     in the next step.
 
 ## Protecting Server Actions
 
@@ -94,7 +93,7 @@ When implementing authentication with protected routes:
    login form or a blank page.
 
 3. **Always test the full auth flow after integration:**
-    - Fresh page load while logged in (should show dashboard, not spinner)
-    - Login → redirect to dashboard
-    - Logout → redirect to auth page
-    - Direct URL access to protected route while logged out
+   - Fresh page load while logged in (should show dashboard, not spinner)
+   - Login → redirect to dashboard
+   - Logout → redirect to auth page
+   - Direct URL access to protected route while logged out

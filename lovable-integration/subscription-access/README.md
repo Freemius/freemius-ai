@@ -15,11 +15,11 @@ Before starting this integration, ensure you have:
   [their SaaS Plans & Pricing guide](https://freemius.com/help/documentation/saas/saas-plans-pricing/).
   Define your subscription plans and pricing tiers, then **save your Plan IDs**
   for use in later steps.
-    - For this guide, we will create two plans, "Starter" and "Pro" with
-      different pricing.
-    - We will keep the integration simple and the plans will not have difference
-      in features, but you can later ask the AI to implement different features
-      for each plan based on the `fsPlanId` field in the entitlement record.
+  - For this guide, we will create two plans, "Starter" and "Pro" with different
+    pricing.
+  - We will keep the integration simple and the plans will not have difference
+    in features, but you can later ask the AI to implement different features
+    for each plan based on the `fsPlanId` field in the entitlement record.
 - **Lovable Account** — Ensure you have access to a Lovable project with
   authentication and cloud/Supabase backend enabled.
 - **Demo App (Optional)** — If you don't have an app yet, start with
@@ -50,20 +50,20 @@ URL that you need to set up in the Freemius Developer Dashboard.
   which it will store securely in the "Secrets" section of the Lovable dashboard
   and use in the implementation.
 - You will receive two URLs:
-    - **Checkout Redirection** — Follow this
-      [guide](https://freemius.com/help/documentation/checkout/integration/hosted-checkout/#redirection-after-a-successful-purchase)
-      to set it up.
-    - **Webhook URL** — Follow this
-      [guide](https://freemius.com/help/documentation/saas/events-webhooks/#how-to-create-a-webhook)
-      to set it up. Ensure you configure the webhook to listen for the following
-      events:
-        - `license.created`
-        - `license.extended`
-        - `license.shortened`
-        - `license.updated`
-        - `license.cancelled`
-        - `license.expired`
-        - `license.plan.changed`
+  - **Checkout Redirection** — Follow this
+    [guide](https://freemius.com/help/documentation/checkout/integration/hosted-checkout/#redirection-after-a-successful-purchase)
+    to set it up.
+  - **Webhook URL** — Follow this
+    [guide](https://freemius.com/help/documentation/saas/events-webhooks/#how-to-create-a-webhook)
+    to set it up. Ensure you configure the webhook to listen for the following
+    events:
+    - `license.created`
+    - `license.extended`
+    - `license.shortened`
+    - `license.updated`
+    - `license.cancelled`
+    - `license.expired`
+    - `license.plan.changed`
 
 ## Single Shot Integration
 

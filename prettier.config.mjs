@@ -6,33 +6,33 @@
  */
 
 export default {
-    useTabs: false,
-    tabWidth: 4,
-    printWidth: 80,
-    semi: true,
-    singleQuote: true,
-    trailingComma: 'es5',
-    bracketSpacing: true,
-    proseWrap: 'always',
-    overrides: [
-        {
-            files: '*.json',
-            options: {
-                tabWidth: 2,
-            },
-        },
-        {
-            files: '*.{yaml,yml}',
-            options: {
-                tabWidth: 2,
-            },
-        },
-        {
-            files: '*.{md,mdx}',
-            options: {
-                parser: 'markdown',
-                proseWrap: 'always',
-            },
-        },
-    ],
+  useTabs: false,
+  tabWidth: 2,
+  printWidth: 80,
+  semi: true,
+  singleQuote: true,
+  trailingComma: 'es5',
+  bracketSpacing: true,
+  proseWrap: 'always',
+  overrides: [
+    {
+      files: '*.json',
+      options: {
+        tabWidth: 2,
+      },
+    },
+    {
+      files: '*.{yaml,yml}',
+      options: {
+        tabWidth: 2,
+      },
+    },
+    {
+      files: '*.{md,mdx}',
+      options: {
+        parser: 'markdown',
+        proseWrap: 'always',
+      },
+    },
+  ],
 };

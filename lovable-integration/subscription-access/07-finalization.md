@@ -16,15 +16,15 @@ followings:
    `https://dashboard.freemius.com/#!/live/products/{PRODUCT_ID}/webhooks/listeners/`
    (replace {PRODUCT_ID} with the actual product ID) to add the webhook listener
    and provide the URL there. Ask me to listen for events
-    - license.cancelled
-    - license.created
-    - license.deleted
-    - license.expired
-    - license.extended
-    - license.plan.changed
-    - license.quota.changed
-    - license.shortened
-    - license.updated
+   - license.cancelled
+   - license.created
+   - license.deleted
+   - license.expired
+   - license.extended
+   - license.plan.changed
+   - license.quota.changed
+   - license.shortened
+   - license.updated
 6. When giving me the Checkout Redirection URL mention I need to go to
    `https://dashboard.freemius.com/#!/live/products/{PRODUCT_ID}/plans/`
    (replace {PRODUCT_ID} with the actual product ID) to configure the checkout

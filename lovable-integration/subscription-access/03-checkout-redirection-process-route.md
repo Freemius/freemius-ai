@@ -11,10 +11,10 @@ table.
 
 ```typescript
 import {
-    freemius,
-    processPurchase,
-    LIVE_SUPABASE_URL,
-    LIVE_FRONTEND_URL,
+  freemius,
+  processPurchase,
+  LIVE_SUPABASE_URL,
+  LIVE_FRONTEND_URL,
 } from '../_shared/freemius'; // Correct the path
 
 // Process the GET request on this route.
@@ -32,21 +32,21 @@ const modifiedCurrentUrlString = modifiedCurrentUrl.toString();
 
 // Validate the redirect (SDK does signature validation) and get the information
 const redirectInfo = await freemius.checkout.processRedirect(
-    modifiedCurrentUrlString,
-    LIVE_SUPABASE_URL
+  modifiedCurrentUrlString,
+  LIVE_SUPABASE_URL
 );
 
 // Process the purchase from redirectInfo if possible
 if (redirectInfo?.license_id) {
-    processPurchase(redirectInfo.license_id);
+  processPurchase(redirectInfo.license_id);
 }
 
 // Once done redirect to a specific front-end page with a success message or error message based on the result of the process. For this you can use a redirection header with the URL of the front-end page and pass query parameters to indicate success or failure and the message to show.
 return new Response(null, {
-    status: 302,
-    headers: {
-        Location: `${LIVE_FRONTEND_URL}/checkout-result?success=true`, // Change this to your actual front-end URL and page
-    },
+  status: 302,
+  headers: {
+    Location: `${LIVE_FRONTEND_URL}/checkout-result?success=true`, // Change this to your actual front-end URL and page
+  },
 });
 // Adapt the code to lovable platform's way of handling redirections as needed.
 ```
