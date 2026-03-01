@@ -490,6 +490,8 @@ needs to support POST API methods or anything that comes with
      for the button label.
    - Clicking the button will take to the `checkoutUrl` page.
    - Render the features of each plan in a nice UI.
+   - Selecting the monthly billing cycle will add a `?billing_cycle=monthly`
+     query parameter to the checkout URL.
 
 ## Protecting Server Actions
 
@@ -775,6 +777,9 @@ If the user has an active entitlement, display a subscription card with:
     - "Cancel subscription" (outline in red border).
   - When "Cancel subscription" is clicked:
     - Show a confirmation dialog.
+    - Make the "Keep subscription" button default and primary, and the "Cancel
+      subscription" button as destructive and secondary (to the left of the keep
+      button).
     - Call `functions/v1/cancel-subscription` to process cancellation.
     - Refresh the account data after success.
     - Show a toast notification.

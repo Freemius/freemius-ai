@@ -84,6 +84,8 @@ needs to support POST API methods or anything that comes with
      for the button label.
    - Clicking the button will take to the `checkoutUrl` page.
    - Render the features of each plan in a nice UI.
+   - Selecting the monthly billing cycle will add a `?billing_cycle=monthly`
+     query parameter to the checkout URL.
 
 ## Protecting Server Actions
 
