@@ -73,7 +73,7 @@ const SANDBOX = false; // Change this to true if you want to test in sandbox mod
  * Get the active entitlement for a user based on the records in the database.
  * This function will be used in the API route to get the user's entitlement information.
  */
-async function getUserEntitlement(userId: string) {
+export async function getUserEntitlement(userId: string) {
   // Somehow read from the `user_fs_entitlement` table where the userId matches.
   const entitlements = await someDbCall();
 
@@ -95,9 +95,21 @@ async function getUserEntitlement(userId: string) {
 }
 
 /**
+ * Helper function to check if the user has an active subscription for a specific plan.
+ * This can be used in API routes to protect access to plan-specific features.
+ */
+export async function hasPlan(
+  userId: string,
+  planId: string
+): Promise<boolean> {
+  const entitlement = await getUserEntitlement(userId);
+  return String(entitlement?.fsPlanId) === String(planId);
+}
+
+/**
  * Create a Function to synchronize the entitlement information to the database.
  */
-async function processPurchase(licenseId: string) {
+export async function processPurchase(licenseId: string) {
   const purchaseInfo = await freemius.purchase.retrievePurchase(licenseId);
   const localUser = await getUserFromDb(purchaseInfo.email);
 
@@ -162,7 +174,7 @@ async function createFreemiusCheckout(
   return checkout;
 }
 
-async function getPricingData(
+export async function getPricingData(
   user: { email: string; firstName?: string; lastName?: string },
   entitlement: Pick<
     PurchaseEntitlementData,
@@ -257,7 +269,7 @@ async function getPricingData(
 /**
  * Function to cancel subscription
  */
-async function cancelSubscription(
+export async function cancelSubscription(
   entitlement: Pick<PurchaseEntitlementData, 'fsLicenseId'>
 ): Promise<boolean> {
   const subscription = await freemius.api.license.retrieveSubscription(
@@ -529,6 +541,8 @@ type SubscriptionPaymentData = {
     isCancelled: boolean;
     // In YYYY-MM-DD HH:mm:ss format or null
     canceledAt: string | null;
+    planTitle: string | null;
+    unitTitle: string | null;
   } | null;
   payments: {
     id: string;
@@ -537,6 +551,10 @@ type SubscriptionPaymentData = {
     currency: string;
     // In YYYY-MM-DD HH:mm:ss format
     created: string;
+    planTitle: string | null;
+    unitTitle: string | null;
+    type: 'payment' | 'refund';
+    isRenewal: boolean;
   }[];
 };
 
@@ -549,6 +567,32 @@ async function getSubscriptionAndPayments(
   const payments = await freemius.api.user.retrievePayments(
     entitlement.fsUserId
   );
+  const pricingData = await freemius.api.product.retrievePricingData();
+
+  const planTitleById = new Map<string, string>();
+  const pricingById = new Map<string, { quota: number }>();
+
+  pricingData?.plans?.forEach((plan) => {
+    planTitleById.set(plan.id!, plan.title!);
+
+    plan.pricing?.forEach((pricing) => {
+      pricingById.set(pricing.id!, {
+        quota: pricing.licenses ?? 1,
+      });
+    });
+  });
+
+  function formatQuota(quota: number | null): string | null {
+    if (!quota || quota === 1) {
+      return null;
+    }
+
+    const singular =
+      pricingData?.plugin?.selling_unit_label?.singular ?? 'Unit';
+    const plural = pricingData?.plugin?.selling_unit_label?.plural ?? 'Units';
+
+    return `${quota} ${quota === 1 ? singular : plural}`;
+  }
 
   const data: SubscriptionPaymentData = {
     subscription: subscription
@@ -559,6 +603,10 @@ async function getSubscriptionAndPayments(
           nextPayment: subscription.next_payment!,
           isCancelled: subscription.canceled_at !== null,
           canceledAt: subscription.canceled_at ?? null,
+          planTitle: planTitleById.get(subscription.plan_id!) ?? 'Unknown Plan',
+          unitTitle: formatQuota(
+            pricingById.get(subscription.pricing_id!)?.quota ?? null
+          ),
         }
       : null,
     payments:
@@ -568,6 +616,12 @@ async function getSubscriptionAndPayments(
         vat: payment.vat!,
         currency: payment.currency!,
         created: payment.created!,
+        planTitle: planTitleById.get(payment.plan_id!) ?? 'Unknown Plan',
+        type: payment.type === 'payment' ? 'payment' : 'refund',
+        unitTitle: formatQuota(
+          pricingById.get(payment.pricing_id!)?.quota ?? null
+        ),
+        isRenewal: payment.is_renewal ?? false,
       })) ?? [],
   };
 
@@ -633,95 +687,28 @@ const invoice = await freemius.api.user.retrieveInvoice(userId, paymentId);
 
 ## Front-end Implementation
 
-1. Create a new page `/accounts` in the front-end, make sure the link is visible
-   in the navigation menu.
-2. Make supabase function call to `functions/v1/get-account`
-3. If has `entitlement` show a block explaining subscription.
-   1. Subscription is inactive if `isCancelled` is `true`. Use `canceledAt` to
-      show when it was cancelled. Use `entitlement.expiration` to show uptil
-      when user can access benefits. Add a button "Subscribe" that takes the
-      user to the `/pricing` page to purchase a new subscription.
-   2. Subscription is active if `isCancelled` is `false`. Use information from
-      the the `SubscriptionPaymentData` to render a nice UI.
-   3. Show a "Change Plan" or "Subscribe Again" button based on the subscription
-      status that takes the user to the `/pricing` page to purchase a new
-      subscription.
-   4. Show a "Cancel Subscription" button if the subscription is active.
-      Clicking it will call the `functions/v1/cancel-subscription` API route to
-      cancel the subscription and then update the UI accordingly.
-4. If has `entitlement` show a "Payment History" block where you show the list
-   of payments from the `SubscriptionPaymentData`.
-   - Show the amount first with just currency symbol and then date with a nice
-     icon and formatting.
-   - If `type` is `refund` show a refund icon and make the amount red to
-     indicate it was a refund with `-` sign before the amount.
-   - Clicking on a payment will call the `functions/v1/download-invoice` API
-     route to view the invoice for that payment. Show the invoice in new tab.
-5. If has `entitlement` show a "Manage Subscription" button that will take the
-   user to the Freemius Customer Portal. For this, make another API call to
-   `functions/v1/get-customer-portal-link` to get the link and then open it in a
-   new tab.
-   1. If the browser fails to open the tab (due to popup blockers), then show
-      the link to the user and ask them to open it manually.
-   2. The URL must be visible very prominently and clicking it should
-      immediately open the link in a new tab.
-   3. Do show a UI saying the link will expire in 5 mins. You can also add a
-      timer counting down to when the link will expire.
-   4. Hide the URL after 5 mins because it will expire and show the main button
-      again.
-6. If no `entitlement` show a message saying "You don't have an active
-   subscription" and show a "Subscribe" button that takes to the `/pricing`
-   page.
+### Setup
 
-### User Interface
+1. Create a new page `/accounts` in the front-end and add the link to the
+   navigation menu.
+2. On page load, call `functions/v1/get-account` to fetch entitlement and
+   subscription data.
+3. Render the appropriate UI based on whether the user has an active
+   subscription.
 
-#### No Subscription State
-
-- Show a centered card: "You don't have an active subscription" with a
-  "Subscribe" button linking to `/pricing`.
-
-#### Active Subscription Card
-
-- Header row: label "CURRENT SUBSCRIPTION" (uppercase, muted, tracking-widest)
-  on the left, a small "Manage Billing" button (outline, with ExternalLink icon)
-  on the right.
-- **Manage Billing** calls `functions/v1/get-customer-portal-link`, opens the
-  link in a new tab. If popup is blocked, show the link prominently inside a
-  highlighted box with a 5-minute countdown timer. Hide the link and restore the
-  button after expiry. Text should be "Your billing portal link is ready:
-  [Click here](link) - expires in 5:00".
-- Body: show price as `$X per month/year` in bold, renewal date below in muted
-  text.
-- If cancelled: show cancellation date and access expiration, with a "Reactivate
-  Subscription" button linking to `/pricing`.
-- If active: show "Update subscription" (primary) and "Cancel subscription"
-  (outline) buttons side by side. Cancel calls
-  `functions/v1/cancel-subscription`, refreshes account data, and shows a toast.
-
-#### Payment History Card
-
-- Header: "PAYMENTS" (same uppercase muted style).
-- Each payment row: CreditCard icon → date formatted as "Mon DD, YYYY" → amount
-  (`$X.XX`) → small Badge ("Paid" secondary or "Refund" destructive) → "Invoice"
-  outline button with FileText icon.
-- Invoice download: use `fetch()` with `Authorization: Bearer` header (never
-  `window.open` for authenticated endpoints), convert response to blob, open via
-  `URL.createObjectURL`.
-
-#### General UI Rules
+### General UI Rules
 
 - Use semantic design tokens (bg-background, text-muted-foreground, etc.), never
   raw colors.
 - Cards use `p-6`, sections separated by `<Separator />`.
 - All buttons show a `Loader2` spinner when their action is in progress.
 
-### Frontend Edge Function Calls
+### Managing Authenticated API Calls
 
 Never use `window.open()` or `<a href>` to call authenticated edge functions
 directly — browsers don't send Authorization headers with those methods.
 
-Instead, always use `fetch()` with the user's session token, then create a blob
-URL for file downloads:
+Instead, always use `fetch()` with the user's session token:
 
 ```ts
 const {
@@ -730,12 +717,91 @@ const {
 const res = await fetch(url, {
   headers: { Authorization: `Bearer ${session.access_token}` },
 });
+```
+
+For file downloads (invoices), convert the response to a blob and open via
+`URL.createObjectURL`:
+
+```ts
 const blob = await res.blob();
 window.open(URL.createObjectURL(blob), '_blank');
 ```
 
-When making function calls show a spinner/loading to the button that triggers
-the call and disable it while loading.
+### No Subscription State
+
+If the user has no active entitlement:
+
+- Display a centered card with the message "You don't have an active
+  subscription".
+- Include a "Subscribe" button linking to `/pricing`.
+
+### Active Subscription Card
+
+If the user has an active entitlement, display a subscription card with:
+
+**Header:**
+
+- Label "CURRENT SUBSCRIPTION" (uppercase, muted, tracking-widest) on the left.
+- A small "Manage Billing" button (outline style, with ExternalLink icon) on the
+  right.
+
+**Manage Billing interaction:**
+
+- Call `functions/v1/get-customer-portal-link` to get the Freemius portal link.
+- Attempt to open it in a new tab. If blocked by popup blocker:
+  - Show the link prominently in a highlighted box.
+  - Display text: "Your billing portal link is ready: [Click here](link) -
+    expires in 4:00".
+  - Show a 4-minute countdown timer.
+  - After expiry, hide the link and restore the button.
+
+**Body content:**
+
+- A small badge showing the plan title (from subscription.planTitle) and
+  optionally the unit title (e.g. "5 Seats" from subscription.unitTitle).
+- Display the price as `$X per month/year` in bold.
+- Show the renewal date below in muted text.
+
+**Handle subscription states:**
+
+- **If cancelled** (`isCancelled` is `true`):
+  - Show the cancellation date (`canceledAt`).
+  - Show the access expiration date (`entitlement.expiration`).
+  - Display a "Subscribe Again" button linking to `/pricing`.
+
+- **If active** (`isCancelled` is `false`):
+  - Display two buttons one below the other:
+    - "Update subscription" (primary) linking to `/pricing`.
+    - "Cancel subscription" (outline in red border).
+  - When "Cancel subscription" is clicked:
+    - Show a confirmation dialog.
+    - Call `functions/v1/cancel-subscription` to process cancellation.
+    - Refresh the account data after success.
+    - Show a toast notification.
+
+### Payment History Card
+
+If the user has entitlement, display a Payment History section:
+
+**Header:**
+
+- Label "PAYMENTS" (same uppercase muted style as subscription card).
+
+**Payment rows:**
+
+- CreditCard icon → date formatted as "Mon DD, YYYY" → amount (`$X.XX`) → Badge
+  ("Paid" secondary or "Refund" destructive) → payment.planTitle and optionally
+  payment.unitTitle in smaller muted text if present → "Invoice" outline button
+  with PDF icon.
+- For refunds, show a refund icon, make the amount red, and prefix with `-`
+  sign.
+
+**Invoice download:**
+
+- Clicking an "Invoice" button calls
+  `functions/v1/download-invoice?payment_id=<id>`.
+- Use the authenticated fetch pattern above with the Authorization header.
+- Convert response to blob and open via `URL.createObjectURL`.
 
 # Step 6: Webhook Integration
 
@@ -811,9 +877,9 @@ followings:
 4. Make sure all references to the supabase URL in the code are updated to the
    production URL if the app has been published.
 5. When giving me the Webhook URL mention I need to go to
-   `https://dashboard.freemius.com/#!/live/products/{PRODUCT_ID}/webhooks/listeners/`
-   (replace {PRODUCT_ID} with the actual product ID) to add the webhook listener
-   and provide the URL there. Ask me to listen for events
+   [Developer Dashboard](https://dashboard.freemius.com/) and navigate to
+   Product → Webhooks to add the webhook listener and provide the URL there. Ask
+   me to listen for events
    - license.cancelled
    - license.created
    - license.deleted
@@ -824,6 +890,6 @@ followings:
    - license.shortened
    - license.updated
 6. When giving me the Checkout Redirection URL mention I need to go to
-   `https://dashboard.freemius.com/#!/live/products/{PRODUCT_ID}/plans/`
-   (replace {PRODUCT_ID} with the actual product ID) to configure the checkout
-   redirection under **Customization** tab.
+   [Developer Dashboard](https://dashboard.freemius.com/) and navigate to
+   Product → Plans to configure the checkout redirection under **Customization**
+   tab.

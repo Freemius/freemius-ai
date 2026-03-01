@@ -23,7 +23,7 @@ const SANDBOX = false; // Change this to true if you want to test in sandbox mod
  * Get the active entitlement for a user based on the records in the database.
  * This function will be used in the API route to get the user's entitlement information.
  */
-async function getUserEntitlement(userId: string) {
+export async function getUserEntitlement(userId: string) {
   // Somehow read from the `user_fs_entitlement` table where the userId matches.
   const entitlements = await someDbCall();
 
@@ -45,9 +45,21 @@ async function getUserEntitlement(userId: string) {
 }
 
 /**
+ * Helper function to check if the user has an active subscription for a specific plan.
+ * This can be used in API routes to protect access to plan-specific features.
+ */
+export async function hasPlan(
+  userId: string,
+  planId: string
+): Promise<boolean> {
+  const entitlement = await getUserEntitlement(userId);
+  return String(entitlement?.fsPlanId) === String(planId);
+}
+
+/**
  * Create a Function to synchronize the entitlement information to the database.
  */
-async function processPurchase(licenseId: string) {
+export async function processPurchase(licenseId: string) {
   const purchaseInfo = await freemius.purchase.retrievePurchase(licenseId);
   const localUser = await getUserFromDb(purchaseInfo.email);
 
@@ -112,7 +124,7 @@ async function createFreemiusCheckout(
   return checkout;
 }
 
-async function getPricingData(
+export async function getPricingData(
   user: { email: string; firstName?: string; lastName?: string },
   entitlement: Pick<
     PurchaseEntitlementData,
@@ -207,7 +219,7 @@ async function getPricingData(
 /**
  * Function to cancel subscription
  */
-async function cancelSubscription(
+export async function cancelSubscription(
   entitlement: Pick<PurchaseEntitlementData, 'fsLicenseId'>
 ): Promise<boolean> {
   const subscription = await freemius.api.license.retrieveSubscription(

@@ -6,7 +6,7 @@
   "description": "Freemius AI integrations and skills repository tooling",
   "license": "MIT",
   "scripts": {
-    "prompt:concat:lovable:1": "node scripts/prompt-concat.js lovable-integration/subscription-access",
+    "prompt:concat:lovable:1": "node scripts/prompt-concat.js lovable-integration/subscription",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "prepare": "husky",

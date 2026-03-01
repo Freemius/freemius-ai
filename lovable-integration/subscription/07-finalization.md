@@ -13,9 +13,9 @@ followings:
 4. Make sure all references to the supabase URL in the code are updated to the
    production URL if the app has been published.
 5. When giving me the Webhook URL mention I need to go to
-   `https://dashboard.freemius.com/#!/live/products/{PRODUCT_ID}/webhooks/listeners/`
-   (replace {PRODUCT_ID} with the actual product ID) to add the webhook listener
-   and provide the URL there. Ask me to listen for events
+   [Developer Dashboard](https://dashboard.freemius.com/) and navigate to
+   Product → Webhooks to add the webhook listener and provide the URL there. Ask
+   me to listen for events
    - license.cancelled
    - license.created
    - license.deleted
@@ -26,6 +26,6 @@ followings:
    - license.shortened
    - license.updated
 6. When giving me the Checkout Redirection URL mention I need to go to
-   `https://dashboard.freemius.com/#!/live/products/{PRODUCT_ID}/plans/`
-   (replace {PRODUCT_ID} with the actual product ID) to configure the checkout
-   redirection under **Customization** tab.
+   [Developer Dashboard](https://dashboard.freemius.com/) and navigate to
+   Product → Plans to configure the checkout redirection under **Customization**
+   tab.
