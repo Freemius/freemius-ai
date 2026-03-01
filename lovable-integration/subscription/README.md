@@ -5,7 +5,7 @@ assume you want to give a simple subscription based access to certain features
 in your application. If the user has an active subscription, then can perform
 it, otherwise you want to show a button that takes them to the Checkout flow.
 
-## Prerequisites
+## Getting Started
 
 Before starting this integration, ensure you have:
 
@@ -13,77 +13,23 @@ Before starting this integration, ensure you have:
   [Freemius](https://dashboard.freemius.com/register/) and create a SaaS product
   by following
   [their SaaS Plans & Pricing guide](https://freemius.com/help/documentation/saas/saas-plans-pricing/).
-  Define your subscription plans and pricing tiers, then **save your Plan IDs**
-  for use in later steps.
-  - For this guide, we will create two plans, "Starter" and "Pro" with different
-    pricing.
-  - We will keep the integration simple and the plans will not have difference
-    in features, but you can later ask the AI to implement different features
-    for each plan based on the `fsPlanId` field in the entitlement record.
 - **Lovable Account** — Ensure you have access to a Lovable project with
   authentication and cloud/Supabase backend enabled.
 - **Demo App (Optional)** — If you don't have an app yet, start with
   [Create a Demo App](00-create-app.md) to set up a test application with
   authentication and a simple premium feature.
 
-TODO: Add link to official Doc for Freemius Setup.
+Now follow our documentation
+[here](https://freemius.com/help/documentation/ai/lovable/).
 
-## Expected Outcome
+It will explain the needed steps and expected outcome.
 
-By the end of this integration, you will have a fully functional subscription
-system in your Lovable app:
+## Advanced Step-by-Step Integration
 
-1. Certain features will be gated behind a subscription paywall.
-2. Users can subscribe via Freemius checkout and receive entitlements in
-   real-time.
-3. An accounts page will display subscription status and provide links to manage
-   subscriptions via Freemius customer portal.
-4. Webhooks will keep your database in sync with Freemius license events for
-   accurate entitlement management.
-
-At relevant steps, you will be prompted to share secrets (like API keys and
-tokens) that need to be configured in the Lovable dashboard for secure access by
-the backend functions. You will also get Checkout Redirection URL and Webhook
-URL that you need to set up in the Freemius Developer Dashboard.
-
-- The Lovable UI will ask you to provide the Freemius API credentials as input,
-  which it will store securely in the "Secrets" section of the Lovable dashboard
-  and use in the implementation.
-- You will receive two URLs:
-  - **Checkout Redirection** — Follow this
-    [guide](https://freemius.com/help/documentation/checkout/integration/hosted-checkout/#redirection-after-a-successful-purchase)
-    to set it up.
-  - **Webhook URL** — Follow this
-    [guide](https://freemius.com/help/documentation/saas/events-webhooks/#how-to-create-a-webhook)
-    to set it up. Ensure you configure the webhook to listen for the following
-    events:
-    - `license.created`
-    - `license.extended`
-    - `license.shortened`
-    - `license.updated`
-    - `license.cancelled`
-    - `license.expired`
-    - `license.plan.changed`
-
-## Single Shot Integration
-
-Just copy-paste the content of the
-[lovable-knowledgebase](./lovable-knowledgebase.md) into your Lovable project
-Settings --> Knowledgebase and then ask the AI
-
-> Implement the Freemius integration based on the knowledgebase content.
-
-This should work for majority of the cases. If you want more control over the
-implementation or if the single shot integration doesn't work, you can follow
-the step-by-step instructions in the following markdown files. Each file
-corresponds to a specific part of the integration process.
-
-## Step by Step Integration
-
-If the single shot integration doesn't work or you want more control over the
-implementation, you can follow the step-by-step instructions in the following
-markdown files. Each file corresponds to a specific part of the integration
-process:
+If the single shot integration from the documentation doesn't work or you want
+more control over the implementation, you can follow the step-by-step
+instructions in the following markdown files. Each file corresponds to a
+specific part of the integration process:
 
 1. **[Create Entitlement Table](01-creating-entitlement-table.md)** — Set up the
    database schema to track user entitlements, license information, and
@@ -123,7 +69,7 @@ GitHub Copilot or Lovable) to implement the integration step by step. You can:
 Each step is modular and builds upon the previous ones, ensuring a smooth
 integration process that results in a fully functional subscription system.
 
-## Testing Integration
+### Testing Checkout Integration
 
 You can test the integration by:
 

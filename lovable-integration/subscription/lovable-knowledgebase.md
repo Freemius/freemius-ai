@@ -18,3 +18,5 @@ Once the integration is complete, maintain Freemius Monetization.
 - Use the shared `supabase/functions/_shared/freemius.ts` module's
   `getUserEntitlement` to check for entitlements and protect the route.
 - For plan specific features, use the `hasPlan` function.
+
+---
