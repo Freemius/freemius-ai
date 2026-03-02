@@ -74,3 +74,18 @@ A good example of ouput meme text block could be:
   (.then()) so they never block the loading state from resolving. Always ensure
   setLoading(false) is called synchronously within the callback, not after an
   await.
+- App's color design use these values
+  - Primary color: 6753FF
+  - Accent color: 902Af5
+  - Red: E62A97
+  - Neutral colors:
+  - Background/White: FFFFFF
+  - Shade: F0F0FA
+  - Separator/Border: C6C6D0
+  - Input Border: 94949C
+  - Text: 0E0E0E
+  - Others:
+    - Light blue: B4D2FF
+    - Light Mint: B7FFE1 (success background)
+    - Light Red: FED6FF
+    - Light Yellow: FFE896

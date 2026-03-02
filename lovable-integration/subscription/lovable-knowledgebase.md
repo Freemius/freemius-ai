@@ -11,12 +11,12 @@ https://raw.githubusercontent.com/Freemius/freemius-ai/refs/heads/main/lovable-i
 
 ### Maintenance & Paywall Guidelines
 
-Once the integration is complete, maintain Freemius Monetization.
-
-- When creating new functionalities, API routes etc think if those needs to be
-  protected by the paywall.
-- Use the shared `supabase/functions/_shared/freemius.ts` module's
-  `getUserEntitlement` to check for entitlements and protect the route.
-- For plan specific features, use the `hasPlan` function.
+- To protect any API route, use the shared
+  `supabase/functions/_shared/freemius.ts` module's `getUserEntitlement` (for
+  any plan) or `hasPlan` (specific plan) functions to check for entitlements and
+  protect the route.
+- For front-end paywall, call the `functions/v1/get-entitlements` API route to
+  check for active entitlements and show a paywall UI with link to `/pricing`
+  through a `Subscribe` button if there is no active subscription.
 
 ---
