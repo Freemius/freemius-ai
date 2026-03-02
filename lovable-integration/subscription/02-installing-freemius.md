@@ -44,6 +44,11 @@ export async function getUserEntitlement(userId: string) {
   return actives?.[actives.length - 1] ?? null;
 }
 
+export async function deleteEntitlement(fsLicenseId: string) {
+  // Delete the entitlement record from the `user_fs_entitlement` table based on the fsLicenseId
+  await someDbDeleteCall(fsLicenseId);
+}
+
 /**
  * Helper function to check if the user has an active subscription for a specific plan.
  * This can be used in API routes to protect access to plan-specific features.

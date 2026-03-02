@@ -94,6 +94,11 @@ export async function getUserEntitlement(userId: string) {
   return actives?.[actives.length - 1] ?? null;
 }
 
+export async function deleteEntitlement(fsLicenseId: string) {
+  // Delete the entitlement record from the `user_fs_entitlement` table based on the fsLicenseId
+  await someDbDeleteCall(fsLicenseId);
+}
+
 /**
  * Helper function to check if the user has an active subscription for a specific plan.
  * This can be used in API routes to protect access to plan-specific features.
@@ -820,7 +825,11 @@ changes to the `user_fs_entitlement` table in our database.
    https://freemius.com/help/documentation/saas-sdk/js-sdk/integration/#handling-license-updates-via-webhooks)
 
    ```typescript
-   import { freemius, processPurchase } from '../_shared/freemius'; // Correct the path
+   import {
+     freemius,
+     processPurchase,
+     deleteEntitlement,
+   } from '../_shared/freemius'; // Correct the path
    import {
      WebhookAuthenticationMethod,
      WebhookEventType,
@@ -839,12 +848,17 @@ changes to the `user_fs_entitlement` table in our database.
      'license.cancelled',
      'license.expired',
      'license.plan.changed',
+     'license.quota.changed',
    ];
 
    listener.on(licenseEvents, async ({ objects: { license } }) => {
      if (license && license.id) {
        await processPurchase(license.id);
      }
+   });
+
+   listener.on('license.deleted', async ({ data }) => {
+     await deleteEntitlement(data.license_id);
    });
 
    // Get the raw body from the request
