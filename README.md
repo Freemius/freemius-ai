@@ -8,6 +8,8 @@ AI-assisted development workflows.
 1. Vibe coding platform integration examples
    - **Lovable**
      - [SaaS application with subscription-based feature access](./lovable-integration/subscription/README.md)
+   - **Sticklight**
+     - [SaaS application with subscription-based feature access](./sticklight-integration/subscription/README.md)
 2. Shareable AI agent skills
    - Initial skill assets are planned and will be added incrementally.
 
