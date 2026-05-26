@@ -4,19 +4,17 @@ We need to create a table called `user_fs_entitlement` with the following
 columns:
 
 - id - The primary key.
-- user_id - A foreign key referencing the user table. Value must match with the
-  ID of the user in the lovable auth system (text/string).
+- user_id - A foreign key referencing the user table. Value must match with the ID of the user in the bolt auth system (text/string).
 - fs_license_id - A unique identifier for the Freemius license (text/string).
 - fs_plan_id - The Freemius plan ID (text/string).
 - fs_pricing_id - The Freemius pricing ID (text/string).
 - fs_user_id - The Freemius user ID (text/string).
-- type - The entitlement type (e.g., subscription, lifetime, etc.). It could be
-  an enum with value `subscription` or `lifetime`.
+- type - The entitlement type (e.g., subscription, lifetime, etc.). It could be an enum with value `subscription` or `lifetime`.
 - expiration - The license expiration timestamp (nullable).
 - is_canceled - A boolean flag indicating if the license is canceled.
 - created_at - Timestamp when the record was created.
 
-Here is a SQL equivalent, please adapt it for the lovable platform (supabase)
+Here is a SQL equivalent, please adapt it for the bolt platform (supabase)
 
 ```sql
 -- First create the enum type
@@ -54,7 +52,7 @@ We will install the Freemius JS SDK for backend. This is strictly meant for
 backend and should not be exposed in the frontend. The package is
 `@freemius/sdk`.
 
-Create a file called `supabase/functions/_shared/freemius.ts` for
+Create a file called `supabase/functions/shared/freemius.ts` for
 backend/supabase and put the following code in it:
 
 ```ts
@@ -296,10 +294,7 @@ export const LIVE_SUPABASE_URL =
 export const LIVE_FRONTEND_URL = 'https://your-frontend-url.com'; // Change this to your actual frontend URL
 ```
 
-Store all credentials securely inside the "Secrets" section of the Lovable
-dashboard.
-
-The file must be created under `supabase/functions/_shared` or any other shared
+The file must be created under `supabase/functions/shared` or any other shared
 location that can be imported in our API routes.
 
 1. The documentation is available here:
@@ -354,7 +349,7 @@ import {
   processPurchase,
   LIVE_SUPABASE_URL,
   LIVE_FRONTEND_URL,
-} from '../_shared/freemius'; // Correct the path
+} from '../shared/freemius'; // Correct the path
 
 // Process the GET request on this route.
 
@@ -387,7 +382,7 @@ return new Response(null, {
     Location: `${LIVE_FRONTEND_URL}/checkout-result?success=true`, // Change this to your actual front-end URL and page
   },
 });
-// Adapt the code to lovable platform's way of handling redirections as needed.
+// Adapt the code to bolt platform's way of handling redirections as needed.
 ```
 
 1. The documentation is available under
@@ -429,7 +424,7 @@ Create the route under `supabase/functions/get-entitlements/index.ts` and put
 the following code in it:
 
 ```typescript
-import { getUserEntitlement } from '../_shared/freemius'; // Correct the path
+import { getUserEntitlement } from '../shared/freemius'; // Correct the path
 
 // Now create the API route handler that will call the above functions and return the entitlement information to the frontend. Make sure to handle authentication and only allow access to the entitlements of the currently logged in user.
 
@@ -446,7 +441,7 @@ import {
   getPricingData,
   PricingData,
   getUserEntitlement,
-} from '../_shared/freemius'; // Correct the path
+} from '../shared/freemius'; // Correct the path
 // Now create the API route handler that will call the above function and return the pricing information to the frontend. Make sure to handle authentication and only allow access to logged in users. Pass the user information to the `getPricingData` function to generate the checkout URL for each plan based on the user information if needed.
 
 const localUserId = await getUserIdFromAuth(); // Implement this function to get the user ID from the authentication context
@@ -501,7 +496,7 @@ needs to support POST API methods or anything that comes with
 ## Protecting Server Actions
 
 All backend server action that must be behind a paywall will check the
-`getUserEntitlement` from the `_shared/freemius.ts` file to verify if the user
+`getUserEntitlement` from the `shared/freemius.ts` file to verify if the user
 has an active entitlement before allowing access to the feature. If the user
 does not have an active entitlement, the API route should return an appropriate
 error message and status code.
@@ -536,7 +531,7 @@ subscription.
 ### New route under `supabase/functions/get-account/index.ts`:
 
 ```typescript
-import { getUserEntitlement, freemius } from '../_shared/freemius'; // Correct the path
+import { getUserEntitlement, freemius } from '../shared/freemius'; // Correct the path
 
 type SubscriptionPaymentData = {
   subscription: {
@@ -650,7 +645,7 @@ const subscriptionAndPayments = entitlement
 This will return the Freemius Customer Portal link for the logged in user:
 
 ```typescript
-import { freemius } from '../_shared/freemius'; // Correct the path
+import { freemius } from '../shared/freemius'; // Correct the path
 
 // Using the email address
 const { link } = await freemius.api.user.retrieveHostedCustomerPortalByEmail(
@@ -661,7 +656,7 @@ const { link } = await freemius.api.user.retrieveHostedCustomerPortalByEmail(
 ### New route under `supabase/functions/cancel-subscription/index.ts`
 
 ```typescript
-import { getUserEntitlement, cancelSubscription } from '../_shared/freemius'; // Correct the path
+import { getUserEntitlement, cancelSubscription } from '../shared/freemius'; // Correct the path
 
 const userId = '...'; // Get the user ID from the session or authentication context
 const entitlement = await getUserEntitlement(userId);
@@ -679,7 +674,7 @@ const cancellationResult = await cancelSubscription(entitlement);
 ### New route under `supabase/functions/download-invoice/index.ts`
 
 ```typescript
-import { freemius } from '../_shared/freemius'; // Correct the path
+import { freemius } from '../shared/freemius'; // Correct the path
 
 const userId = '...'; // Get the user ID from the session or authentication context
 const url = new URL(request.url);
@@ -829,7 +824,7 @@ changes to the `user_fs_entitlement` table in our database.
      freemius,
      processPurchase,
      deleteEntitlement,
-   } from '../_shared/freemius'; // Correct the path
+   } from '../shared/freemius'; // Correct the path
    import {
      WebhookAuthenticationMethod,
      WebhookEventType,
@@ -886,13 +881,13 @@ changes to the `user_fs_entitlement` table in our database.
 Now that the Freemius Licensing integration is complete, please check the
 followings:
 
-1. The checkout generation under `_shared/freemius.ts` file is not sandbox
+1. The checkout generation under `shared/freemius.ts` file is not sandbox
    unless that's what I explicitly want for testing.
 2. When making additional endpoints make sure to protect it with entitlement
    check if necessary.
 3. If the app has been published, make sure to update all front-end URLs to
    point to the production URL instead of the local development URL inside
-   `_shared/freemius.ts`.
+   `shared/freemius.ts`.
 4. Make sure all references to the supabase URL in the code are updated to the
    production URL if the app has been published.
 5. When giving me the Webhook URL mention I need to go to
