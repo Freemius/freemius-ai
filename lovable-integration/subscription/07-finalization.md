@@ -1,6 +1,6 @@
 # Step 7: Finalization
 
-Now that the Freemius Licensing integraiton is complete, please check the
+Now that the Freemius Licensing integration is complete, please check the
 followings:
 
 1. The checkout generation under `_shared/freemius.ts` file is not sandbox
