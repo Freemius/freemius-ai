@@ -1,0 +1,405 @@
+:root {
+  --bg: #ffffff;
+  --shade: #f4f3fc;
+  --border: #e3e2ee;
+  --text: #14131f;
+  --muted: #6b6b76;
+  --primary: #6753ff;
+  --accent: #902af5;
+  --red: #e62a97;
+  --gradient: linear-gradient(120deg, #6753ff 0%, #902af5 100%);
+  --shadow-sm:
+    0 1px 2px rgba(20, 19, 31, 0.04), 0 2px 8px rgba(20, 19, 31, 0.05);
+  --shadow-md: 0 8px 30px rgba(103, 83, 255, 0.12);
+  font-family:
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    sans-serif;
+  color: var(--text);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(
+      900px 500px at 100% -10%,
+      rgba(144, 42, 245, 0.08),
+      transparent 60%
+    ),
+    radial-gradient(
+      800px 480px at -10% 0%,
+      rgba(103, 83, 255, 0.08),
+      transparent 55%
+    ),
+    var(--bg);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--primary);
+}
+
+h1 {
+  letter-spacing: -0.02em;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: saturate(180%) blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1.1rem;
+  align-items: center;
+}
+
+.nav-links a {
+  text-decoration: none;
+  font-weight: 500;
+  color: var(--text);
+  opacity: 0.75;
+  transition: opacity 0.15s ease;
+}
+
+.nav-links a:hover {
+  opacity: 1;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 1.15rem;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.brand-name {
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.badge {
+  font-size: 0.72rem;
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.badge-free {
+  background: var(--shade);
+  color: var(--muted);
+}
+
+.badge-premium {
+  background: var(--gradient);
+  color: #fff;
+  box-shadow: var(--shadow-md);
+}
+
+/* Credit-balance badge (top-up / pay-as-you-go model). */
+.badge-credits {
+  background: var(--shade);
+  color: var(--primary);
+  border: 1px solid var(--border);
+}
+
+.container {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.75rem;
+  background: var(--bg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Hero band for the signed-out / welcome view */
+.hero {
+  border-radius: 20px;
+  padding: 2.75rem 2rem;
+  background: var(--gradient);
+  color: #fff;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 1.5rem;
+}
+
+.hero h1 {
+  margin: 0.75rem 0 0.5rem;
+  font-size: 2.1rem;
+}
+
+.hero p {
+  margin: 0;
+  opacity: 0.92;
+  max-width: 48ch;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+button,
+.btn,
+.btn-outline,
+.btn-light {
+  display: inline-block;
+  border: none;
+  border-radius: 10px;
+  padding: 0.65rem 1.15rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--gradient);
+  color: #fff;
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    opacity 0.12s ease;
+}
+
+button:hover:not(:disabled),
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-outline {
+  background: #fff;
+  color: var(--primary);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+
+.btn-light {
+  background: #fff;
+  color: var(--primary);
+  border: none;
+}
+
+input[type='text'],
+input[type='email'] {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+pre.result {
+  background: var(--shade);
+  padding: 1rem;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 420px;
+  overflow: auto;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.discount {
+  color: var(--red);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* --- Phase 2: pricing tables, paywall/portal overlays, customer portal --- */
+
+.pricing-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 1.5rem 0 0.75rem;
+}
+
+/* Each subscription plan groups its Monthly + Yearly cards under a heading. */
+.plan-group {
+  margin: 1.5rem 0;
+}
+
+.plan-group > h3 {
+  margin: 0 0 0.25rem;
+}
+
+.plan-group > .muted {
+  margin: 0 0 0.75rem;
+}
+
+.plan-group .card h4 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+/* Feature overview band on the pricing page. */
+.feature-overview {
+  margin: 1.5rem 0;
+  background: var(--shade);
+}
+
+.feature-overview ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+}
+
+textarea,
+select {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  margin: 0.35rem 0;
+}
+
+textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(14, 14, 14, 0.55);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 3rem 1rem;
+  overflow: auto;
+  z-index: 50;
+}
+
+.overlay-panel {
+  background: var(--bg);
+  border-radius: 14px;
+  padding: 1.75rem;
+  max-width: 760px;
+  width: 100%;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.25);
+}
+
+.overlay-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.portal {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.portal-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.portal-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.billing-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.billing-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+}
+
+table.payments {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+table.payments th,
+table.payments td {
+  text-align: left;
+  padding: 0.5rem 0.4rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* In-app post-purchase success toast (C2): with show_confirmation_dialog: false
+   the app owns the confirmation UX. */
+.toast {
+  position: fixed;
+  top: 4.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--gradient);
+  color: #fff;
+  font-weight: 600;
+  padding: 0.7rem 1.3rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  z-index: 60;
+}
+
+/* OCR page header row: title + credit badge. */
+.ocr-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
