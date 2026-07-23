@@ -1,0 +1,78 @@
+// DocVault — Prisma schema.
+// The user_fs_entitlement table mirrors the proven Lovable/Bolt entitlement pattern
+// and matches PurchaseInfo.toEntitlementRecord() from @freemius/sdk.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum FsEntitlementType {
+  subscription
+  oneoff
+}
+
+model User {
+  id        String  @id @default(cuid())
+  email     String  @unique
+  firstName String?
+  lastName  String?
+  createdAt DateTime @default(now())
+
+  entitlements UserFsEntitlement[]
+  documents    Document[]
+  credit       UserCredit?
+
+  @@map("user")
+}
+
+// Credit balance for the top-up (usage-metering) model. Deliberately SEPARATE
+// from user_fs_entitlement: the entitlement mirror tracks licenses (overwritten
+// on every webhook re-sync), while the balance is a user-level running total
+// that must survive license changes and stack across top-up purchases.
+// See the freemius-core Skill, references/entitlement-logic.md ("Usage-based /
+// credit metering").
+model UserCredit {
+  userId String @id
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  credit    Int      @default(0) // credited on top-up purchase, debited on use
+  updatedAt DateTime @updatedAt
+
+  @@map("user_credit")
+}
+
+model UserFsEntitlement {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Matches PurchaseInfo.toEntitlementRecord() (camelCase) from @freemius/sdk.
+  fsLicenseId String            @unique
+  fsPlanId    String
+  fsPricingId String
+  fsUserId    String
+  type        FsEntitlementType
+  expiration  DateTime?
+  isCanceled  Boolean
+  createdAt   DateTime
+
+  @@index([type])
+  @@map("user_fs_entitlement")
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  filename  String
+  text      String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("document")
+}
